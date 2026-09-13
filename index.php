@@ -28,7 +28,8 @@ json_encode([
 'currency_locked' => false,
 'vat' => 0,
 'theme' => 'light',
-'print_message' => ''
+'print_message' => '',
+'block_mobile' => false
 ], JSON_UNESCAPED_UNICODE),
 LOCK_EX
 );
@@ -228,7 +229,8 @@ $settings = readJsonFile($settingsFile, [
 'currency_locked' => false,
 'vat' => 0,
 'theme' => 'light',
-'print_message' => ''
+'print_message' => '',
+'block_mobile' => false
 ]);
 if (is_array($settings) && !array_key_exists('installed', $settings)) {
 $settings['installed'] = true;
@@ -249,6 +251,9 @@ $settings['theme'] = 'light';
 }
 if (!isset($settings['print_message'])) {
 $settings['print_message'] = '';
+}
+if (!isset($settings['block_mobile'])) {
+$settings['block_mobile'] = false;
 }
 $categories = readJsonFile($categoriesFile, []);
 $products = readJsonFile($productsFile, []);
@@ -407,7 +412,8 @@ $settings = [
 'currency_locked' => true,
 'vat' => isset($settings['vat']) && is_numeric($settings['vat']) ? (float)$settings['vat'] : 0,
 'theme' => isset($settings['theme']) ? (string)$settings['theme'] : 'light',
-'print_message' => isset($settings['print_message']) ? (string)$settings['print_message'] : ''
+'print_message' => isset($settings['print_message']) ? (string)$settings['print_message'] : '',
+'block_mobile' => !empty($settings['block_mobile'])
 ];
 if (!writeJsonFile($settingsFile, $settings)) {
 jsonResponse(['ok' => false, 'error' => 'خطا در نصب']);
@@ -438,7 +444,8 @@ $settings = [
 'currency_locked' => $existingLocked,
 'vat' => $vat,
 'theme' => $theme,
-'print_message' => trim((string)($payload['print_message'] ?? (isset($settings['print_message']) ? $settings['print_message'] : '')))
+'print_message' => trim((string)($payload['print_message'] ?? (isset($settings['print_message']) ? $settings['print_message'] : ''))),
+'block_mobile' => !empty($payload['block_mobile'])
 ];
 if (!writeJsonFile($settingsFile, $settings)) {
 jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره تنظیمات']);
@@ -483,7 +490,6 @@ jsonResponse(['ok' => true]);
 if ($action === 'add_product') {
 $name = trim((string)($payload['name'] ?? ''));
 $category = trim((string)($payload['category'] ?? ''));
-$barcode = trim((string)($payload['barcode'] ?? ''));
 $price = null;
 if (isset($payload['price']) && is_numeric($payload['price'])) {
 $price = (float)$payload['price'];
@@ -495,14 +501,7 @@ if ($stockAlert < 0) $stockAlert = 0;
 if ($name === '' || $category === '' || $price === null || $price < 0) {
 jsonResponse(['ok' => false, 'error' => 'نام، دسته‌بندی و قیمت معتبر وارد کنید']);
 }
-if ($barcode !== '') {
-foreach ($products as $pItem) {
-if ((string)($pItem['barcode'] ?? '') === $barcode) {
-jsonResponse(['ok' => false, 'error' => 'این بارکد قبلا ثبت شده است']);
-}
-}
-}
-$products[] = ['id' => createId(), 'name' => $name, 'category' => $category, 'price' => $price, 'stock' => $stock, 'stock_alert' => $stockAlert, 'barcode' => $barcode];
+$products[] = ['id' => createId(), 'name' => $name, 'category' => $category, 'price' => $price, 'stock' => $stock, 'stock_alert' => $stockAlert];
 if (!writeJsonFile($productsFile, array_values($products))) {
 jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره محصول']);
 }
@@ -955,7 +954,8 @@ $newSettings = [
 'currency_locked' => $existingLocked,
 'vat' => $vat,
 'theme' => $theme,
-'print_message' => trim((string)($bs['print_message'] ?? ''))
+'print_message' => trim((string)($bs['print_message'] ?? '')),
+'block_mobile' => !empty($bs['block_mobile'])
 ];
 if (!writeJsonFile($settingsFile, $newSettings)) {
 jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی تنظیمات']);
@@ -999,8 +999,7 @@ $cleanProducts[] = [
 'category' => $category,
 'price' => $price,
 'stock' => isset($item['stock']) && is_numeric($item['stock']) ? (float)$item['stock'] : 0,
-'stock_alert' => isset($item['stock_alert']) && is_numeric($item['stock_alert']) ? (float)$item['stock_alert'] : 0,
-'barcode' => isset($item['barcode']) ? (string)$item['barcode'] : ''
+'stock_alert' => isset($item['stock_alert']) && is_numeric($item['stock_alert']) ? (float)$item['stock_alert'] : 0
 ];
 }
 if (!writeJsonFile($productsFile, array_values($cleanProducts))) {
@@ -1035,32 +1034,32 @@ jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است'])
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
 :root {
---bg: #f4f6fb;
---bg-gradient: linear-gradient(160deg, #f7f8fc 0%, #eef1f9 60%, #e9edf7 100%);
+--bg: #f0fdfa;
+--bg-gradient: linear-gradient(160deg, #f0fdfa 0%, #e6f7f4 60%, #d9f2ee 100%);
 --surface: #ffffff;
---surface-alt: #f8fafc;
---surface-hover: #f1f5f9;
---border: #e2e8f0;
---border-light: #eef2f7;
---border-input: #cbd5e1;
---text: #0f172a;
---text-secondary: #334155;
---text-muted: #64748b;
---text-faint: #94a3b8;
+--surface-alt: #f7fefc;
+--surface-hover: #ecfbf7;
+--border: #d5e9e4;
+--border-light: #e3f2ee;
+--border-input: #b8d9d0;
+--text: #0c3b33;
+--text-secondary: #1d5c4f;
+--text-muted: #5a8a7d;
+--text-faint: #8fb3a8;
 --danger: #e11d48;
 --danger-bg: #fff1f2;
 --danger-border: #fecdd3;
 --success: #10b981;
 --success-soft: rgba(16, 185, 129, 0.12);
---primary: #4f46e5;
---primary-soft: rgba(79, 70, 229, 0.10);
+--primary: #0d9488;
+--primary-soft: rgba(13, 148, 136, 0.10);
 --primary-text: #ffffff;
---accent: #7c3aed;
---shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
---shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
---shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10);
---shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.12);
---shadow-island: 0 12px 40px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.08);
+--accent: #06b6d4;
+--shadow-sm: 0 1px 2px rgba(12, 59, 51, 0.06);
+--shadow: 0 4px 12px rgba(12, 59, 51, 0.08);
+--shadow-md: 0 8px 24px rgba(12, 59, 51, 0.10);
+--shadow-lg: 0 16px 48px rgba(12, 59, 51, 0.12);
+--shadow-island: 0 12px 40px rgba(12, 59, 51, 0.14), 0 2px 8px rgba(12, 59, 51, 0.08);
 --radius-sm: 8px;
 --radius: 12px;
 --radius-lg: 16px;
@@ -1069,27 +1068,27 @@ jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است'])
 --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 body.dark {
---bg: #0b1020;
---bg-gradient: linear-gradient(160deg, #0b1020 0%, #0d1428 60%, #101a33 100%);
---surface: #121826;
---surface-alt: #182032;
---surface-hover: #1d2740;
---border: #243049;
---border-light: #1c2740;
---border-input: #33415c;
---text: #e2e8f0;
---text-secondary: #cbd5e1;
---text-muted: #8fa3bf;
---text-faint: #5b6b85;
+--bg: #04211d;
+--bg-gradient: linear-gradient(160deg, #04211d 0%, #06302a 60%, #083b33 100%);
+--surface: #0a2b26;
+--surface-alt: #0e352f;
+--surface-hover: #124038;
+--border: #1c5148;
+--border-light: #16443c;
+--border-input: #2a6b60;
+--text: #d7f2ec;
+--text-secondary: #b0e0d6;
+--text-muted: #7fb8aa;
+--text-faint: #4f8172;
 --danger: #fb7185;
 --danger-bg: #331a22;
 --danger-border: #5b2333;
 --success: #34d399;
 --success-soft: rgba(52, 211, 153, 0.12);
---primary: #818cf8;
---primary-soft: rgba(129, 140, 248, 0.14);
---primary-text: #0b1020;
---accent: #a78bfa;
+--primary: #2dd4bf;
+--primary-soft: rgba(45, 212, 191, 0.14);
+--primary-text: #04211d;
+--accent: #22d3ee;
 --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
 --shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -1108,6 +1107,200 @@ transition: var(--transition);
 -moz-osx-font-smoothing: grayscale;
 overflow-x: hidden;
 }
+body.menu-open { overflow: hidden; }
+.bg-orbs { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.bg-orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.22; animation: floatOrb 22s ease-in-out infinite; }
+.bg-orb-1 { width: 420px; height: 420px; background: var(--primary); top: -120px; right: -120px; }
+.bg-orb-2 { width: 360px; height: 360px; background: var(--accent); bottom: -100px; left: -100px; animation-delay: -7s; }
+.bg-orb-3 { width: 300px; height: 300px; background: var(--success); top: 42%; left: 32%; opacity: 0.13; animation-delay: -14s; }
+body.dark .bg-orb { opacity: 0.14; }
+body.dark .bg-orb-3 { opacity: 0.09; }
+@keyframes floatOrb {
+0%, 100% { transform: translate(0,0) scale(1); }
+33% { transform: translate(42px,-38px) scale(1.08); }
+66% { transform: translate(-30px,30px) scale(0.96); }
+}
+.hamburger-fab {
+position: fixed;
+top: 16px;
+inset-inline-end: 16px;
+z-index: 1300;
+width: 52px;
+height: 52px;
+border-radius: 50%;
+border: none;
+background: linear-gradient(135deg, var(--primary), var(--accent));
+box-shadow: var(--shadow-md);
+cursor: pointer;
+display: none;
+align-items: center;
+justify-content: center;
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hamburger-fab:hover { transform: scale(1.05); }
+.hamburger-fab:active { transform: scale(0.96); }
+.hb-line {
+position: absolute;
+left: 50%;
+width: 22px;
+height: 2.5px;
+border-radius: 2px;
+background: var(--primary-text);
+transform: translateX(-50%);
+transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.hb-1 { top: 16px; }
+.hb-2 { top: 25px; }
+.hb-3 { top: 34px; }
+.hamburger-fab.open .hb-1 { top: 25px; transform: translateX(-50%) rotate(45deg); }
+.hamburger-fab.open .hb-2 { opacity: 0; transform: translateX(-50%) scaleX(0.2); }
+.hamburger-fab.open .hb-3 { top: 25px; transform: translateX(-50%) rotate(-45deg); }
+.mobile-backdrop {
+position: fixed;
+inset: 0;
+z-index: 1200;
+background: rgba(4, 33, 29, 0.45);
+backdrop-filter: blur(2px);
+opacity: 0;
+visibility: hidden;
+pointer-events: none;
+transition: opacity 0.3s ease, visibility 0.3s ease;
+display: none;
+}
+.mobile-backdrop.show { opacity: 1; visibility: visible; pointer-events: auto; }
+.mobile-drawer {
+position: fixed;
+top: 0;
+bottom: 0;
+inset-inline-end: 0;
+z-index: 1250;
+width: min(300px, 85vw);
+background: var(--surface);
+border-inline-start: 1px solid var(--border);
+box-shadow: var(--shadow-lg);
+display: none;
+flex-direction: column;
+pointer-events: none;
+transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+html[dir="ltr"] .mobile-drawer { transform: translateX(105%); }
+html[dir="rtl"] .mobile-drawer { transform: translateX(-105%); }
+html[dir="ltr"] .mobile-drawer.open, html[dir="rtl"] .mobile-drawer.open { transform: translateX(0); pointer-events: auto; }
+.drawer-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+padding: 16px;
+border-bottom: 1px solid var(--border);
+}
+.drawer-header strong {
+font-size: 17px;
+font-weight: 800;
+background: linear-gradient(135deg, var(--primary), var(--accent));
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+}
+.drawer-close {
+width: 36px;
+height: 36px;
+border-radius: 50%;
+border: 1px solid var(--border);
+background: var(--surface-alt);
+color: var(--text);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: var(--transition);
+}
+.drawer-close:hover { border-color: var(--danger); color: var(--danger); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.drawer-item {
+display: flex;
+align-items: center;
+gap: 12px;
+width: 100%;
+padding: 13px 14px;
+border: none;
+background: transparent;
+color: var(--text-secondary);
+font-size: 14px;
+font-weight: 600;
+font-family: inherit;
+border-radius: var(--radius);
+cursor: pointer;
+text-align: start;
+transition: var(--transition);
+}
+.drawer-item:hover { background: var(--surface-hover); color: var(--text); }
+.drawer-item.active {
+background: linear-gradient(135deg, var(--primary), var(--accent));
+color: var(--primary-text);
+box-shadow: var(--shadow-sm);
+}
+.drawer-item .icon { width: 18px; height: 18px; flex-shrink: 0; }
+.drawer-section-title {
+font-size: 11px;
+font-weight: 800;
+color: var(--text-faint);
+letter-spacing: 0.05em;
+padding: 12px 14px 4px;
+}
+.drawer-footer { padding: 14px; border-top: 1px solid var(--border); }
+.device-info { display: flex; flex-direction: column; gap: 8px; }
+.di-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 12px;
+background: var(--surface-alt);
+border: 1px solid var(--border-light);
+border-radius: var(--radius-sm);
+padding: 10px 14px;
+}
+.di-row span { color: var(--text-muted); font-size: 12px; }
+.di-row strong { color: var(--text); font-size: 13px; font-weight: 600; }
+.block-screen {
+position: fixed;
+inset: 0;
+z-index: 5000;
+display: none;
+align-items: center;
+justify-content: center;
+background: var(--bg-gradient);
+padding: 24px;
+}
+.block-card {
+max-width: 420px;
+width: 100%;
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: var(--radius-xl);
+padding: 40px 28px;
+text-align: center;
+box-shadow: var(--shadow-lg);
+}
+.block-icon {
+width: 76px;
+height: 76px;
+margin: 0 auto 18px;
+border-radius: 50%;
+background: var(--primary-soft);
+color: var(--primary);
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.block-icon svg { width: 36px; height: 36px; }
+.block-card h2 { font-size: 20px; margin-bottom: 10px; color: var(--text); }
+.block-card p { color: var(--text-muted); font-size: 15px; line-height: 1.9; }
+body.blocked .hamburger-fab,
+body.blocked .mobile-drawer,
+body.blocked .mobile-backdrop,
+body.blocked .island-nav,
+body.blocked .side-island { display: none !important; }
 .island-nav {
 position: fixed;
 top: 20px;
@@ -1129,8 +1322,8 @@ overflow-x: auto;
 scrollbar-width: none;
 }
 body.dark .island-nav {
-background: rgba(18, 24, 38, 0.78);
-border-color: rgba(129, 140, 248, 0.15);
+background: rgba(10, 43, 38, 0.78);
+border-color: rgba(45, 212, 191, 0.15);
 }
 .island-nav::-webkit-scrollbar { display: none; }
 .island-nav .nav-item {
@@ -1186,8 +1379,8 @@ overflow-y: auto;
 scrollbar-width: none;
 }
 body.dark .side-island {
-background: rgba(18, 24, 38, 0.8);
-border-color: rgba(129, 140, 248, 0.15);
+background: rgba(10, 43, 38, 0.8);
+border-color: rgba(45, 212, 191, 0.15);
 }
 .side-island::-webkit-scrollbar { display: none; }
 .side-island-title {
@@ -1336,107 +1529,6 @@ cursor: default;
 }
 .form-group input[readonly]:focus { box-shadow: none; border-color: var(--border-input); }
 .form-group textarea { resize: vertical; min-height: 80px; }
-.barcode-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.barcode-row input {
-flex: 1;
-min-width: 140px;
-font-family: 'Inter', monospace;
-letter-spacing: 0.04em;
-}
-.scan-modal {
-position: fixed;
-inset: 0;
-z-index: 3000;
-background: rgba(0, 0, 0, 0.6);
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 20px;
-}
-.scan-dialog {
-background: var(--surface);
-border: 1px solid var(--border);
-border-radius: var(--radius-lg);
-padding: 16px;
-width: 100%;
-max-width: 480px;
-box-shadow: var(--shadow-lg);
-}
-.scan-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 10px;
-margin-bottom: 12px;
-}
-.scan-header strong { font-size: 15px; color: var(--text); }
-.scan-close {
-border: 1px solid var(--border);
-background: var(--surface-alt);
-color: var(--text);
-border-radius: 10px;
-padding: 6px 12px;
-cursor: pointer;
-font-family: inherit;
-font-size: 12px;
-font-weight: 600;
-}
-.scan-close:hover { border-color: var(--danger); color: var(--danger); }
-#scanReader {
-width: 100%;
-border-radius: var(--radius);
-overflow: hidden;
-background: #000;
-min-height: 220px;
-position: relative;
-}
-#scanReader video {
-width: 100%;
-height: auto;
-max-height: 360px;
-object-fit: cover;
-border-radius: var(--radius);
-display: block;
-}
-.scan-overlay {
-position: absolute;
-inset: 0;
-pointer-events: none;
-}
-.scan-overlay::before {
-content: '';
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-width: 70%;
-height: 45%;
-border: 2px solid rgba(255, 255, 255, 0.85);
-border-radius: 10px;
-box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
-}
-.scan-overlay::after {
-content: '';
-position: absolute;
-top: 50%;
-left: 15%;
-right: 15%;
-height: 2px;
-background: var(--primary);
-box-shadow: 0 0 8px var(--primary);
-animation: scanLine 1.6s ease-in-out infinite;
-}
-@keyframes scanLine {
-0% { transform: translateY(-22px); }
-50% { transform: translateY(22px); }
-100% { transform: translateY(-22px); }
-}
-.scan-hint {
-margin-top: 10px;
-font-size: 12px;
-color: var(--text-muted);
-text-align: center;
-}
 .btn {
 border: none;
 background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -1960,7 +2052,7 @@ max-width: 92vw;
 @page { size: A4; margin: 0; }
 @media print {
 body { background: #fff; padding: 0; color: #000; }
-#app, #installer, .island-nav, .side-island, #toastWrap, #scanModal { display: none !important; }
+#app, #installer, .island-nav, .side-island, #toastWrap, .bg-orbs, .hamburger-fab, .mobile-drawer, .mobile-backdrop { display: none !important; }
 .container { padding: 0; max-width: 100% !important; }
 #printArea { display: block !important; padding: 12mm; color: #000; }
 .print-brand { height: 6px; background: #000; margin-bottom: 16px; }
@@ -2055,30 +2147,13 @@ background: none;
 #printArea .total-row.final .total-amount { color: #000; font-size: 16px; }
 }
 @media (max-width: 768px) {
-.island-nav { top: auto; bottom: 16px; padding: 8px; gap: 2px; }
-.island-nav .nav-item { padding: 10px; font-size: 11px; }
-.island-nav .nav-item .label { display: none; }
-.island-nav .theme-btn { width: 38px; height: 38px; }
-.side-island {
-top: auto;
-transform: translateX(-50%);
-left: 50%;
-inset-inline-start: auto;
-bottom: 82px;
-flex-direction: row;
-padding: 6px 8px;
-border-radius: var(--radius-island);
-max-height: none;
-max-width: calc(100% - 24px);
-overflow-x: auto;
-overflow-y: hidden;
-}
-.side-island-title { display: none; }
-.side-item { width: 58px; padding: 8px 4px; font-size: 9px; }
-.side-item .icon { width: 16px; height: 16px; }
-.container { padding: 24px 16px 170px; }
+.island-nav, .side-island { display: none !important; }
+.hamburger-fab { display: flex; }
+.mobile-drawer { display: flex; }
+.mobile-backdrop { display: block; }
+.container { padding: 84px 16px 40px; }
 body.app-active .container { max-width: 1100px; }
-.header { padding: 20px 16px 24px; }
+.header { padding: 16px 16px 20px; margin-bottom: 20px; }
 .header h1 { font-size: 26px; }
 .stats { grid-template-columns: 1fr; }
 .invoice-meta-grid { grid-template-columns: 1fr; }
@@ -2093,15 +2168,88 @@ body.app-active .container { max-width: 1100px; }
 .invoice-history-actions { width: 100%; }
 .invoice-history-actions .btn { flex: 1; justify-content: center; }
 }
-@media (max-width: 480px) {
-.island-nav { left: 12px; right: 12px; transform: none; max-width: none; }
-.invoice-table { font-size: 11px; }
-.invoice-table th, .invoice-table td { padding: 8px 6px; }
-}
 </style>
 </head>
 <body>
-
+<div class="bg-orbs" aria-hidden="true">
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+</div>
+<button class="hamburger-fab" id="hamburgerFab" onclick="toggleMobileMenu()" aria-label="Menu">
+<span class="hb-line hb-1"></span>
+<span class="hb-line hb-2"></span>
+<span class="hb-line hb-3"></span>
+</button>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()"></div>
+<nav class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+<div class="drawer-header">
+<strong data-i18n="appName">پنل رسا</strong>
+<button class="drawer-close" onclick="closeMobileMenu()" aria-label="Close">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
+</div>
+<div class="drawer-body">
+<button class="drawer-item active" data-tab="settings" onclick="switchTab('settings')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+<span data-i18n="tabSettings">تنظیمات</span>
+</button>
+<button class="drawer-item" data-tab="categories" onclick="switchTab('categories')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+<span data-i18n="tabCategories">دسته‌بندی</span>
+</button>
+<button class="drawer-item" data-tab="products" onclick="switchTab('products')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+<span data-i18n="tabProducts">محصولات</span>
+</button>
+<button class="drawer-item" data-tab="invoice" onclick="switchTab('invoice')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+<span data-i18n="tabInvoice">فاکتور</span>
+</button>
+<button class="drawer-item" data-tab="history" onclick="switchTab('history')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+<span data-i18n="tabHistory">تاریخچه</span>
+</button>
+<button class="drawer-item" data-tab="calendar" onclick="switchTab('calendar')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+<span data-i18n="tabCalendar">تقویم</span>
+</button>
+<div class="drawer-section-title" data-i18n="tabWarehouse">انبار</div>
+<button class="drawer-item" data-wtab="inventory" onclick="switchWarehouse('inventory')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+<span data-i18n="whMenuStock">موجودی انبار</span>
+</button>
+<button class="drawer-item" data-wtab="return" onclick="switchWarehouse('return')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+<span data-i18n="whMenuReturn">ثبت مرجوعی</span>
+</button>
+<button class="drawer-item" data-wtab="returns" onclick="switchWarehouse('returns')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+<span data-i18n="whMenuReturns">مرجوعی‌ها</span>
+</button>
+<button class="drawer-item" data-wtab="moves" onclick="switchWarehouse('moves')">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+<span data-i18n="whMenuMoves">تراکنش‌ها</span>
+</button>
+<button class="drawer-item" onclick="toggleTheme()">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+<span data-i18n="themeToggleLabel">تغییر تم</span>
+</button>
+</div>
+<div class="drawer-footer">
+<div class="device-info" id="deviceInfoDrawer"></div>
+</div>
+</nav>
+<div id="mobileBlockScreen" class="block-screen" style="display:none;">
+<div class="block-card">
+<div class="block-icon">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+</div>
+<h2 data-i18n="blockTitle">ورود با این دستگاه مجاز نیست</h2>
+<p data-i18n="blockMessage">لطفاً با دسکتاپ وارد شوید</p>
+<p class="muted" data-i18n="blockHint" style="margin-top:8px;"></p>
+</div>
+</div>
 <nav class="island-nav" id="islandNav" style="display: none;">
 <button class="nav-item active" data-tab="settings" onclick="switchTab('settings')">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -2131,7 +2279,6 @@ body.app-active .container { max-width: 1100px; }
 <svg class="icon" id="appThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
 </button>
 </nav>
-
 <nav class="side-island" id="sideIsland" style="display: none;">
 <div class="side-island-title" data-i18n="tabWarehouse">انبار</div>
 <button class="side-item active" data-wtab="inventory" onclick="switchWarehouse('inventory')">
@@ -2151,7 +2298,6 @@ body.app-active .container { max-width: 1100px; }
 <span data-i18n="whMenuMoves">تراکنش‌ها</span>
 </button>
 </nav>
-
 <div id="installer" class="container" style="display: none;">
 <div class="card">
 <div class="header" style="padding: 0 0 24px 0; margin-bottom: 0;">
@@ -2176,7 +2322,6 @@ body.app-active .container { max-width: 1100px; }
 </button>
 </div>
 </div>
-
 <div id="app" class="container" style="display: none;">
 <div class="header">
 <h1 data-i18n="appName">پنل رسا</h1>
@@ -2186,7 +2331,6 @@ body.app-active .container { max-width: 1100px; }
 <span class="clock-date" id="clockDate"></span>
 </div>
 </div>
-
 <div id="settings" class="tab-content active">
 <div class="card">
 <div class="card-title" data-i18n="settingsTitle">اطلاعات فروشگاه</div>
@@ -2223,6 +2367,14 @@ body.app-active .container { max-width: 1100px; }
 <label data-i18n="calendarLabel">تقویم</label>
 <div id="calendarChoices" class="choice-grid"></div>
 </div>
+<div class="switch-row" id="blockMobileRow">
+<label class="switch">
+<input type="checkbox" id="blockMobileToggle" onchange="onBlockMobileToggle()">
+<span class="slider"></span>
+</label>
+<span data-i18n="blockMobileLabel">مسدود کردن حالت موبایل</span>
+</div>
+<div class="muted" data-i18n="blockMobileHint" style="margin:-8px 0 16px;"></div>
 <div class="actions">
 <button class="btn" onclick="saveSettings()">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -2234,7 +2386,10 @@ body.app-active .container { max-width: 1100px; }
 </button>
 </div>
 </div>
-
+<div class="card">
+<div class="card-title" data-i18n="deviceInfoTitle">اطلاعات دستگاه</div>
+<div class="device-info" id="deviceInfoSettings"></div>
+</div>
 <div class="card card-accent" id="restoreCard">
 <div class="card-title" data-i18n="restoreTitle">بازیابی پشتیبان</div>
 <div class="switch-row">
@@ -2275,7 +2430,6 @@ body.app-active .container { max-width: 1100px; }
 <input type="file" id="backupFileInput" accept=".json,application/json" style="display: none;" onchange="onBackupFileChange(this)">
 </div>
 </div>
-
 <div id="categories" class="tab-content">
 <div class="card">
 <div class="card-title" data-i18n="categoriesTitle">مدیریت دسته‌بندی‌ها</div>
@@ -2290,7 +2444,6 @@ body.app-active .container { max-width: 1100px; }
 <div id="categoriesList" style="margin-top: 20px;"></div>
 </div>
 </div>
-
 <div id="products" class="tab-content">
 <div class="card">
 <div class="card-title" data-i18n="productsTitle">مدیریت محصولات</div>
@@ -2306,16 +2459,6 @@ body.app-active .container { max-width: 1100px; }
 <label data-i18n="priceLabel">قیمت</label>
 <input type="number" id="productPrice" min="0" step="any">
 </div>
-<div class="form-group">
-<label data-i18n="barcodeLabel">بارکد</label>
-<div class="barcode-row">
-<input type="text" id="productBarcode" onkeydown="if(event.key==='Enter'){event.preventDefault();addProduct();}">
-<button class="btn btn-outline" onclick="openCameraScan('product')">
-<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-<span data-i18n="scanWithCamera">اسکن با دوربین</span>
-</button>
-</div>
-</div>
 <div class="invoice-meta-grid">
 <div class="form-group">
 <label data-i18n="initialStockLabel">موجودی اولیه</label>
@@ -2330,10 +2473,13 @@ body.app-active .container { max-width: 1100px; }
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 <span data-i18n="addProduct">افزودن محصول</span>
 </button>
-<div id="productsList" style="margin-top: 20px;"></div>
+<div class="search-box" style="margin-top: 20px;">
+<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+<input type="text" id="productSearch" oninput="renderProducts()" placeholder="جستجوی محصول...">
+</div>
+<div id="productsList"></div>
 </div>
 </div>
-
 <div id="warehouse" class="tab-content">
 <div id="wtab-inventory" class="wtab active">
 <div class="card">
@@ -2373,25 +2519,9 @@ body.app-active .container { max-width: 1100px; }
 </div>
 </div>
 </div>
-
 <div id="invoice" class="tab-content">
 <div class="card card-accent">
 <div class="card-title" data-i18n="invoiceTitle">ساخت فاکتور</div>
-<div class="form-group">
-<label data-i18n="barcodeSaleTitle">فروش با بارکد</label>
-<div class="barcode-row">
-<input type="text" id="barcodeInput" onkeydown="if(event.key==='Enter'){event.preventDefault();addProductByBarcode();}">
-<button class="btn btn-outline" onclick="openCameraScan('invoice')">
-<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-<span data-i18n="scanWithCamera">اسکن با دوربین</span>
-</button>
-<button class="btn" onclick="addProductByBarcode()">
-<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
-<span data-i18n="addToInvoice">افزودن به فاکتور</span>
-</button>
-</div>
-<div class="muted" data-i18n="scanHint">بارکد را اسکن کنید یا وارد کنید و Enter بزنید</div>
-</div>
 <div class="invoice-meta-grid">
 <div class="form-group">
 <label data-i18n="invoiceIdLabel">آیدی فاکتور</label>
@@ -2512,7 +2642,6 @@ body.app-active .container { max-width: 1100px; }
 </button>
 </div>
 </div>
-
 <div class="card card-accent">
 <div class="card-title" data-i18n="invoiceHistoryTitle">تاریخچه فاکتورها</div>
 <div class="search-box">
@@ -2522,7 +2651,6 @@ body.app-active .container { max-width: 1100px; }
 <div id="invoiceHistoryList"></div>
 </div>
 </div>
-
 <div id="history" class="tab-content">
 <div class="stats">
 <div class="stat-card">
@@ -2566,12 +2694,10 @@ body.app-active .container { max-width: 1100px; }
 </div>
 </div>
 </div>
-
 <div class="card">
 <div class="card-title" data-i18n="weekChartTitle">نمودار فروش ۷ روز اخیر</div>
 <div class="bar-chart" id="weekChart"></div>
 </div>
-
 <div class="card">
 <div class="report-toolbar">
 <div class="report-filters">
@@ -2621,10 +2747,8 @@ body.app-active .container { max-width: 1100px; }
 </div>
 <div id="reportTable"></div>
 </div>
-
 <div id="salesTable"></div>
 </div>
-
 <div id="calendar" class="tab-content">
 <div class="card">
 <div class="calendar-mode">
@@ -2646,26 +2770,12 @@ body.app-active .container { max-width: 1100px; }
 </div>
 </div>
 </div>
-
-<div id="scanModal" class="scan-modal" style="display: none;">
-<div class="scan-dialog">
-<div class="scan-header">
-<strong id="scanTitle">اسکن بارکد</strong>
-<button class="scan-close" onclick="closeCameraScan()"><span data-i18n="scanClose">بستن</span></button>
-</div>
-<div id="scanReader"></div>
-<div class="scan-hint" data-i18n="scanHintText">بارکد را مقابل دوربین بگیرید؛ پس از تشخیص خودکار اضافه می‌شود</div>
-</div>
-</div>
-
 <div id="printArea"></div>
-
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 let appData = {
 settings: {
 name: '', phone: '', address: '', currency: 'IRT', language: 'fa',
-calendar: 'jalali', installed: false, currency_locked: false, vat: 0, theme: 'light', print_message: ''
+calendar: 'jalali', installed: false, currency_locked: false, vat: 0, theme: 'light', print_message: '', block_mobile: false
 },
 categories: [], products: [], sales: [], returns: [], stockMoves: [], history: {}
 };
@@ -2693,11 +2803,7 @@ let reportInitialized = false;
 let clockStarted = false;
 let returnSaleId = '';
 let warehouseTab = 'inventory';
-let html5QrCode = null;
-let scanMode = 'invoice';
-let scanCooldownCode = '';
-let scanCooldownTime = 0;
-let audioCtx = null;
+let currentTab = 'settings';
 let currentReport = { type: 'month', label: '', filtered: [], subtotal: 0, discount: 0, vat: 0, total: 0 };
 const languageTimezones = {
 fa: 'Asia/Tehran', en: 'America/New_York', en_GB: 'Europe/London',
@@ -2740,16 +2846,19 @@ subtitle: 'Mrpablo - HST Dev - 2.4',
 tabSettings: 'تنظیمات', tabCategories: 'دسته‌بندی', tabProducts: 'محصولات',
 tabWarehouse: 'انبار', tabInvoice: 'فاکتور', tabHistory: 'تاریخچه', tabCalendar: 'تقویم',
 whMenuStock: 'موجودی انبار', whMenuReturn: 'ثبت مرجوعی', whMenuReturns: 'مرجوعی‌ها', whMenuMoves: 'تراکنش‌ها',
-barcodeLabel: 'بارکد', barcodeSaleTitle: 'فروش با بارکد',
-barcodePlaceholder: 'بارکد را اسکن یا وارد کنید',
-scanHint: 'بارکد را اسکن کنید یا وارد کنید و Enter بزنید',
-barcodeNotFound: 'محصولی با این بارکد یافت نشد',
-barcodeDuplicate: 'این بارکد قبلا ثبت شده است',
-scanWithCamera: 'اسکن با دوربین', scanBarcodeTitle: 'اسکن بارکد',
-scanHintText: 'بارکد را مقابل کادر قرار دهید؛ همه انواع بارکد و QR پشتیبانی می‌شود',
-scanCameraError: 'دسترسی به دوربین ممکن نشد یا دوربین یافت نشد',
-scanLibMissing: 'کتابخانه اسکن بارگذاری نشده است (اتصال اینترنت لازم است)',
-scanClose: 'بستن', scanSuccess: 'اسکن موفق',
+deviceInfoTitle: 'اطلاعات دستگاه',
+deviceLabel: 'نوع دستگاه', osLabel: 'سیستم‌عامل', browserLabel: 'مرورگر', screenLabel: 'وضوح صفحه',
+device_mobile: 'موبایل', device_tablet: 'تبلت', device_desktop: 'دسکتاپ',
+blockMobileLabel: 'مسدود کردن حالت موبایل',
+blockMobileHint: 'با فعال‌سازی، کاربران موبایل و تبلت پیام «لطفاً با دسکتاپ وارد شوید» را می‌بینند. این تنظیم فقط روی دسکتاپ قابل تغییر است.',
+blockTitle: 'ورود با این دستگاه مجاز نیست',
+blockMessage: 'لطفاً با دسکتاپ وارد شوید',
+blockHint: 'دسترسی موبایل و تبلت توسط مدیر غیرفعال شده است.',
+blockEnabledMsg: 'حالت موبایل مسدود شد',
+blockDisabledMsg: 'مسدودسازی غیرفعال شد',
+themeToggleLabel: 'تغییر تم',
+productSearchPlaceholder: 'جستجوی محصول...',
+noProductFound: 'محصولی یافت نشد',
 settingsTitle: 'اطلاعات فروشگاه', storeNameLabel: 'نام فروشگاه', phoneLabel: 'شماره تماس',
 addressLabel: 'آدرس', saveSettings: 'ذخیره تنظیمات', exportBackup: 'دانلود پشتیبان',
 restoreTitle: 'بازیابی پشتیبان', restoreSettings: 'تنظیمات فروشگاه',
@@ -2838,16 +2947,19 @@ subtitle: 'Version 2.5 - Designer & Developer: Mr. Pablo',
 tabSettings: 'Settings', tabCategories: 'Categories', tabProducts: 'Products',
 tabWarehouse: 'Warehouse', tabInvoice: 'Invoice', tabHistory: 'History', tabCalendar: 'Calendar',
 whMenuStock: 'Stock', whMenuReturn: 'New return', whMenuReturns: 'Returns', whMenuMoves: 'Movements',
-barcodeLabel: 'Barcode', barcodeSaleTitle: 'Sell by barcode',
-barcodePlaceholder: 'Scan or enter barcode',
-scanHint: 'Scan or type the barcode and press Enter',
-barcodeNotFound: 'No product found with this barcode',
-barcodeDuplicate: 'This barcode is already registered',
-scanWithCamera: 'Scan with camera', scanBarcodeTitle: 'Scan barcode',
-scanHintText: 'Point the camera at the code; all barcode & QR types are supported',
-scanCameraError: 'Camera access failed or no camera found',
-scanLibMissing: 'Scanner library not loaded (internet connection required)',
-scanClose: 'Close', scanSuccess: 'Scan successful',
+deviceInfoTitle: 'Device Information',
+deviceLabel: 'Device type', osLabel: 'Operating system', browserLabel: 'Browser', screenLabel: 'Screen resolution',
+device_mobile: 'Mobile', device_tablet: 'Tablet', device_desktop: 'Desktop',
+blockMobileLabel: 'Block mobile mode',
+blockMobileHint: 'When enabled, mobile and tablet users will see "Please use a desktop device". This setting can only be changed on desktop.',
+blockTitle: 'Access not allowed on this device',
+blockMessage: 'Please use a desktop device',
+blockHint: 'Mobile and tablet access has been disabled by the administrator.',
+blockEnabledMsg: 'Mobile mode blocked',
+blockDisabledMsg: 'Block disabled',
+themeToggleLabel: 'Toggle theme',
+productSearchPlaceholder: 'Search products...',
+noProductFound: 'No product found',
 settingsTitle: 'Store Information', storeNameLabel: 'Store name', phoneLabel: 'Phone number',
 addressLabel: 'Address', saveSettings: 'Save settings', exportBackup: 'Download backup',
 restoreTitle: 'Restore Backup', restoreSettings: 'Store settings',
@@ -2936,16 +3048,19 @@ subtitle: 'Version 2.5 - Concepteur et développeur : M. Pablo',
 tabSettings: 'Paramètres', tabCategories: 'Catégories', tabProducts: 'Produits',
 tabWarehouse: 'Entrepôt', tabInvoice: 'Facture', tabHistory: 'Historique', tabCalendar: 'Calendrier',
 whMenuStock: 'Stock', whMenuReturn: 'Retour', whMenuReturns: 'Retours', whMenuMoves: 'Mouvements',
-barcodeLabel: 'Code-barres', barcodeSaleTitle: 'Vente par code-barres',
-barcodePlaceholder: 'Scannez ou saisissez le code-barres',
-scanHint: 'Scannez ou saisissez le code puis appuyez sur Entrée',
-barcodeNotFound: 'Aucun produit trouvé avec ce code-barres',
-barcodeDuplicate: 'Ce code-barres est déjà enregistré',
-scanWithCamera: 'Scanner avec la caméra', scanBarcodeTitle: 'Scanner le code-barres',
-scanHintText: 'Dirigez la caméra vers le code ; tous les types de codes et QR sont pris en charge',
-scanCameraError: 'Accès à la caméra impossible ou caméra introuvable',
-scanLibMissing: 'Bibliothèque de scan non chargée (connexion Internet requise)',
-scanClose: 'Fermer', scanSuccess: 'Scan réussi',
+deviceInfoTitle: 'Informations sur l\'appareil',
+deviceLabel: 'Type d\'appareil', osLabel: 'Système d\'exploitation', browserLabel: 'Navigateur', screenLabel: 'Résolution d\'écran',
+device_mobile: 'Mobile', device_tablet: 'Tablette', device_desktop: 'Bureau',
+blockMobileLabel: 'Bloquer le mode mobile',
+blockMobileHint: 'Si activé, les utilisateurs mobiles et tablettes verront « Veuillez utiliser un ordinateur ». Ce réglage ne peut être modifié que sur ordinateur.',
+blockTitle: 'Accès non autorisé sur cet appareil',
+blockMessage: 'Veuillez utiliser un ordinateur',
+blockHint: 'L\'accès mobile et tablette a été désactivé par l\'administrateur.',
+blockEnabledMsg: 'Mode mobile bloqué',
+blockDisabledMsg: 'Blocage désactivé',
+themeToggleLabel: 'Changer de thème',
+productSearchPlaceholder: 'Rechercher des produits...',
+noProductFound: 'Aucun produit trouvé',
 settingsTitle: 'Informations de la boutique', storeNameLabel: 'Nom de la boutique', phoneLabel: 'Numéro de téléphone',
 addressLabel: 'Adresse', saveSettings: 'Enregistrer', exportBackup: 'Télécharger sauvegarde',
 restoreTitle: 'Restaurer la sauvegarde', restoreSettings: 'Paramètres de la boutique',
@@ -3028,16 +3143,19 @@ subtitle: 'Version 2.5 - Designer & Entwickler: Herr Pablo',
 tabSettings: 'Einstellungen', tabCategories: 'Kategorien', tabProducts: 'Produkte',
 tabWarehouse: 'Lager', tabInvoice: 'Rechnung', tabHistory: 'Verlauf', tabCalendar: 'Kalender',
 whMenuStock: 'Bestand', whMenuReturn: 'Rückgabe', whMenuReturns: 'Rückgaben', whMenuMoves: 'Bewegungen',
-barcodeLabel: 'Barcode', barcodeSaleTitle: 'Verkauf per Barcode',
-barcodePlaceholder: 'Barcode scannen oder eingeben',
-scanHint: 'Barcode scannen oder eingeben und Enter drücken',
-barcodeNotFound: 'Kein Produkt mit diesem Barcode gefunden',
-barcodeDuplicate: 'Dieser Barcode ist bereits registriert',
-scanWithCamera: 'Mit Kamera scannen', scanBarcodeTitle: 'Barcode scannen',
-scanHintText: 'Kamera auf den Code richten; alle Barcode- und QR-Typen werden unterstützt',
-scanCameraError: 'Kamerazugriff fehlgeschlagen oder keine Kamera gefunden',
-scanLibMissing: 'Scanner-Bibliothek nicht geladen (Internetverbindung erforderlich)',
-scanClose: 'Schließen', scanSuccess: 'Scan erfolgreich',
+deviceInfoTitle: 'Geräteinformationen',
+deviceLabel: 'Gerätetyp', osLabel: 'Betriebssystem', browserLabel: 'Browser', screenLabel: 'Bildschirmauflösung',
+device_mobile: 'Mobil', device_tablet: 'Tablet', device_desktop: 'Desktop',
+blockMobileLabel: 'Mobilmodus sperren',
+blockMobileHint: 'Wenn aktiviert, sehen Mobil- und Tablet-Nutzer „Bitte verwenden Sie einen Desktop“. Diese Einstellung kann nur auf dem Desktop geändert werden.',
+blockTitle: 'Zugriff auf diesem Gerät nicht erlaubt',
+blockMessage: 'Bitte verwenden Sie einen Desktop',
+blockHint: 'Der Mobil- und Tablet-Zugriff wurde vom Administrator deaktiviert.',
+blockEnabledMsg: 'Mobilmodus gesperrt',
+blockDisabledMsg: 'Sperre deaktiviert',
+themeToggleLabel: 'Design wechseln',
+productSearchPlaceholder: 'Produkte suchen...',
+noProductFound: 'Kein Produkt gefunden',
 settingsTitle: 'Shopinformationen', storeNameLabel: 'Shopname', phoneLabel: 'Telefonnummer',
 addressLabel: 'Adresse', saveSettings: 'Speichern', exportBackup: 'Backup',
 restoreTitle: 'Backup wiederherstellen', restoreSettings: 'Shop-Einstellungen',
@@ -3111,16 +3229,19 @@ subtitle: 'Versión 2.5 - Diseñador: Sr. Pablo',
 tabSettings: 'Ajustes', tabCategories: 'Categorías', tabProducts: 'Productos',
 tabWarehouse: 'Almacén', tabInvoice: 'Factura', tabHistory: 'Historial', tabCalendar: 'Calendario',
 whMenuStock: 'Stock', whMenuReturn: 'Devolución', whMenuReturns: 'Devoluciones', whMenuMoves: 'Movimientos',
-barcodeLabel: 'Código de barras', barcodeSaleTitle: 'Venta por código de barras',
-barcodePlaceholder: 'Escanee o introduzca el código',
-scanHint: 'Escanee o escriba el código y pulse Enter',
-barcodeNotFound: 'No se encontró producto con este código',
-barcodeDuplicate: 'Este código ya está registrado',
-scanWithCamera: 'Escanear con cámara', scanBarcodeTitle: 'Escanear código',
-scanHintText: 'Apunte la cámara al código; se admiten todos los tipos de código y QR',
-scanCameraError: 'Falló el acceso a la cámara o no se encontró cámara',
-scanLibMissing: 'Biblioteca de escaneo no cargada (se requiere conexión a Internet)',
-scanClose: 'Cerrar', scanSuccess: 'Escaneo correcto',
+deviceInfoTitle: 'Información del dispositivo',
+deviceLabel: 'Tipo de dispositivo', osLabel: 'Sistema operativo', browserLabel: 'Navegador', screenLabel: 'Resolución de pantalla',
+device_mobile: 'Móvil', device_tablet: 'Tableta', device_desktop: 'Escritorio',
+blockMobileLabel: 'Bloquear modo móvil',
+blockMobileHint: 'Si está activado, los usuarios de móvil y tableta verán «Por favor, usa un escritorio». Esta opción solo se puede cambiar en escritorio.',
+blockTitle: 'Acceso no permitido en este dispositivo',
+blockMessage: 'Por favor, usa un escritorio',
+blockHint: 'El acceso móvil y tableta ha sido deshabilitado por el administrador.',
+blockEnabledMsg: 'Modo móvil bloqueado',
+blockDisabledMsg: 'Bloqueo desactivado',
+themeToggleLabel: 'Cambiar tema',
+productSearchPlaceholder: 'Buscar productos...',
+noProductFound: 'No se encontró producto',
 settingsTitle: 'Información', storeNameLabel: 'Nombre', phoneLabel: 'Teléfono', addressLabel: 'Dirección',
 saveSettings: 'Guardar', exportBackup: 'Descargar',
 restoreTitle: 'Restaurar copia', restoreSettings: 'Ajustes de la tienda',
@@ -3258,22 +3379,100 @@ el.classList.remove('show');
 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
 }, 3200);
 }
-function beep() {
-try {
-if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-if (audioCtx.state === 'suspended') audioCtx.resume();
-const o = audioCtx.createOscillator();
-const g = audioCtx.createGain();
-o.type = 'sine';
-o.frequency.value = 880;
-o.connect(g);
-g.connect(audioCtx.destination);
-g.gain.setValueAtTime(0.001, audioCtx.currentTime);
-g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
-g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
-o.start();
-o.stop(audioCtx.currentTime + 0.16);
-} catch (e) {}
+function detectDeviceInfo() {
+const ua = navigator.userAgent;
+let os = '—';
+if (/Windows NT 10/i.test(ua)) os = 'Windows 10/11';
+else if (/Windows/i.test(ua)) os = 'Windows';
+else if (/Android/i.test(ua)) os = 'Android';
+else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+else if (/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
+else if (/CrOS/i.test(ua)) os = 'Chrome OS';
+else if (/Linux/i.test(ua)) os = 'Linux';
+let device = 'desktop';
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+if (/iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua)) {
+device = 'tablet';
+} else if (/Mobi|Android|iPhone|iPod|IEMobile|Opera Mini/i.test(ua)) {
+device = 'mobile';
+} else if (isTouch && Math.min(screen.width, screen.height) < 820) {
+device = 'mobile';
+} else if (isTouch) {
+device = 'tablet';
+}
+let browser = '—';
+if (/Edg\//i.test(ua)) browser = 'Edge';
+else if (/OPR\/|Opera/i.test(ua)) browser = 'Opera';
+else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung';
+else if (/Chrome\//i.test(ua)) browser = 'Chrome';
+else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+else if (/Safari\//i.test(ua)) browser = 'Safari';
+return { os: os, device: device, browser: browser };
+}
+function renderDeviceInfo() {
+const info = detectDeviceInfo();
+const html =
+'<div class="di-row"><span>' + escapeHtml(t('deviceLabel')) + '</span><strong>' + escapeHtml(t('device_' + info.device)) + '</strong></div>' +
+'<div class="di-row"><span>' + escapeHtml(t('osLabel')) + '</span><strong>' + escapeHtml(info.os) + '</strong></div>' +
+'<div class="di-row"><span>' + escapeHtml(t('browserLabel')) + '</span><strong>' + escapeHtml(info.browser) + '</strong></div>' +
+'<div class="di-row"><span>' + escapeHtml(t('screenLabel')) + '</span><strong>' + screen.width + '×' + screen.height + '</strong></div>';
+document.querySelectorAll('.device-info').forEach(function (el) { el.innerHTML = html; });
+}
+function toggleMobileMenu() {
+const drawer = document.getElementById('mobileDrawer');
+if (!drawer) return;
+if (drawer.classList.contains('open')) closeMobileMenu();
+else openMobileMenu();
+}
+function openMobileMenu() {
+const drawer = document.getElementById('mobileDrawer');
+const backdrop = document.getElementById('mobileBackdrop');
+const fab = document.getElementById('hamburgerFab');
+if (drawer) { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); }
+if (backdrop) backdrop.classList.add('show');
+if (fab) fab.classList.add('open');
+document.body.classList.add('menu-open');
+renderDeviceInfo();
+}
+function closeMobileMenu() {
+const drawer = document.getElementById('mobileDrawer');
+const backdrop = document.getElementById('mobileBackdrop');
+const fab = document.getElementById('hamburgerFab');
+if (drawer) { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); }
+if (backdrop) backdrop.classList.remove('show');
+if (fab) fab.classList.remove('open');
+document.body.classList.remove('menu-open');
+}
+function applyMobileBlock() {
+const blockEnabled = !!appData.settings.block_mobile;
+const device = detectDeviceInfo().device;
+const isMobileOrTablet = device === 'mobile' || device === 'tablet';
+const blockScreen = document.getElementById('mobileBlockScreen');
+if (blockEnabled && isMobileOrTablet) {
+document.body.classList.add('blocked');
+if (blockScreen) blockScreen.style.display = 'flex';
+const app = document.getElementById('app');
+const installer = document.getElementById('installer');
+if (app) app.style.display = 'none';
+if (installer) installer.style.display = 'none';
+} else {
+document.body.classList.remove('blocked');
+if (blockScreen) blockScreen.style.display = 'none';
+}
+}
+function updateBlockToggleVisibility() {
+const device = detectDeviceInfo().device;
+const isDesktop = device === 'desktop';
+const row = document.getElementById('blockMobileRow');
+const hint = row ? row.nextElementSibling : null;
+if (row) row.style.display = isDesktop ? 'flex' : 'none';
+}
+async function onBlockMobileToggle() {
+const cb = document.getElementById('blockMobileToggle');
+appData.settings.block_mobile = cb ? cb.checked : false;
+await persistSettings(false);
+applyMobileBlock();
+toast(appData.settings.block_mobile ? t('blockEnabledMsg') : t('blockDisabledMsg'), 'success');
 }
 function updateLiveClock() {
 const wrap = document.getElementById('liveClock');
@@ -3317,8 +3516,9 @@ element.textContent = t(element.getAttribute('data-i18n'));
 });
 const searchInput = document.getElementById('invoiceSearch');
 if (searchInput) searchInput.placeholder = t('searchPlaceholder');
-const barcodeInput = document.getElementById('barcodeInput');
-if (barcodeInput) barcodeInput.placeholder = t('barcodePlaceholder');
+const productSearch = document.getElementById('productSearch');
+if (productSearch) productSearch.placeholder = t('productSearchPlaceholder');
+renderDeviceInfo();
 }
 function applyTheme(theme) {
 if (theme === 'dark') { document.body.classList.add('dark'); }
@@ -3486,137 +3686,14 @@ return await response.json();
 return { ok: false, error: t('error') };
 }
 }
-function findProductByBarcode(code) {
-const c = String(code || '').trim();
-if (!c) return null;
-for (let i = 0; i < appData.products.length; i++) {
-const p = appData.products[i];
-if ((p.barcode || '') === c) return p;
-}
-return null;
-}
-function addProductByCode(code) {
-const c = String(code || '').trim();
-if (!c) return false;
-const product = findProductByBarcode(c);
-if (!product) {
-toast(t('barcodeNotFound'), 'error');
-return false;
-}
-const existing = invoiceItems.find(function (it) { return it.product_id === product.id; });
-if (existing) {
-existing.quantity += 1;
-} else {
-invoiceItems.push({ name: product.name, category: product.category || '', price: Number(product.price), quantity: 1, product_id: product.id });
-}
-renderInvoiceItems();
-saveInvoice(false);
-toast(t('addedToInvoice') + ': ' + product.name, 'success');
-return true;
-}
-function addProductByBarcode() {
-const input = document.getElementById('barcodeInput');
-if (!input) return;
-const code = input.value.trim();
-if (!code) { input.focus(); return; }
-const ok = addProductByCode(code);
-if (ok) { input.value = ''; input.focus(); }
-else { input.select(); }
-}
-function allScannerFormats() {
-try {
-if (typeof Html5QrcodeSupportedFormats === 'undefined') return undefined;
-const F = Html5QrcodeSupportedFormats;
-return [
-F.QR_CODE, F.AZTEC, F.CODABAR, F.CODE_39, F.CODE_93, F.CODE_128,
-F.DATA_MATRIX, F.EAN_8, F.EAN_13, F.ITF, F.MAXICODE, F.PDF_417,
-F.RSS_14, F.RSS_EXPANDED, F.UPC_A, F.UPC_E
-];
-} catch (e) { return undefined; }
-}
-async function stopScanner() {
-if (html5QrCode) {
-try { if (html5QrCode.isScanning) await html5QrCode.stop(); } catch (e) {}
-try { html5QrCode.clear(); } catch (e) {}
-html5QrCode = null;
-}
-}
-async function openCameraScan(mode) {
-scanMode = mode;
-scanCooldownCode = '';
-scanCooldownTime = 0;
-const modal = document.getElementById('scanModal');
-const reader = document.getElementById('scanReader');
-const title = document.getElementById('scanTitle');
-reader.innerHTML = '';
-if (title) title.textContent = mode === 'product' ? t('scanBarcodeTitle') : t('barcodeSaleTitle');
-modal.style.display = 'flex';
-if (typeof Html5Qrcode === 'undefined') {
-toast(t('scanLibMissing'), 'error');
-closeCameraScan();
-return;
-}
-await stopScanner();
-html5QrCode = new Html5Qrcode('scanReader', { verbose: false });
-const config = { fps: 10, rememberLastUsedCamera: true, disableFlip: false };
-const formats = allScannerFormats();
-if (formats) config.formatsToSupport = formats;
-const videoConstraints = {
-facingMode: { ideal: 'environment' },
-width: { ideal: 1920 },
-height: { ideal: 1080 },
-advanced: [{ focusMode: 'continuous' }]
-};
-let started = false;
-try {
-await html5QrCode.start(videoConstraints, config, onScanSuccess, function () {});
-started = true;
-} catch (e) { started = false; }
-if (!started) {
-try {
-await html5QrCode.start({ facingMode: 'environment' }, config, onScanSuccess, function () {});
-started = true;
-} catch (e2) { started = false; }
-}
-if (!started) {
-try {
-await html5QrCode.start(undefined, config, onScanSuccess, function () {});
-started = true;
-} catch (e3) { started = false; }
-}
-if (!started) {
-toast(t('scanCameraError'), 'error');
-closeCameraScan();
-return;
-}
-const overlay = document.createElement('div');
-overlay.className = 'scan-overlay';
-reader.appendChild(overlay);
-}
-async function closeCameraScan() {
-const modal = document.getElementById('scanModal');
-if (modal) modal.style.display = 'none';
-await stopScanner();
-}
-function onScanSuccess(decodedText) {
-const code = String(decodedText || '').trim();
-if (!code) return;
-const now = Date.now();
-if (scanCooldownCode === code && now - scanCooldownTime < 1500) return;
-scanCooldownCode = code;
-scanCooldownTime = now;
-beep();
-if (scanMode === 'product') {
-const input = document.getElementById('productBarcode');
-if (input) input.value = code;
-toast(t('scanSuccess') + ': ' + code, 'success');
-closeCameraScan();
-return;
-}
-addProductByCode(code);
+function syncDrawerActive() {
+document.querySelectorAll('.drawer-item').forEach(function (item) { item.classList.remove('active'); });
+const drawerButton = document.querySelector('.drawer-item[data-tab="' + currentTab + '"]');
+if (drawerButton) drawerButton.classList.add('active');
 }
 function switchWarehouse(id) {
 warehouseTab = id;
+currentTab = 'warehouse';
 document.querySelectorAll('.side-item').forEach(function (b) {
 b.classList.toggle('active', b.getAttribute('data-wtab') === id);
 });
@@ -3626,14 +3703,21 @@ el.classList.toggle('active', el.id === 'wtab-' + id);
 document.querySelectorAll('.nav-item').forEach(function (i) { i.classList.remove('active'); });
 document.querySelectorAll('.tab-content').forEach(function (i) { i.classList.remove('active'); });
 document.getElementById('warehouse').classList.add('active');
+document.querySelectorAll('.drawer-item').forEach(function (i) { i.classList.remove('active'); });
+const drawerW = document.querySelector('.drawer-item[data-wtab="' + id + '"]');
+if (drawerW) drawerW.classList.add('active');
+closeMobileMenu();
 renderWarehouse();
 }
 function switchTab(tabId) {
+currentTab = tabId;
 document.querySelectorAll('.nav-item').forEach(function (item) { item.classList.remove('active'); });
 document.querySelectorAll('.tab-content').forEach(function (item) { item.classList.remove('active'); });
 const tabButton = document.querySelector('.nav-item[data-tab="' + tabId + '"]');
 if (tabButton) tabButton.classList.add('active');
 document.getElementById(tabId).classList.add('active');
+syncDrawerActive();
+closeMobileMenu();
 if (tabId === 'categories') renderCategories();
 if (tabId === 'products') renderProducts();
 if (tabId === 'warehouse') renderWarehouse();
@@ -3642,8 +3726,6 @@ renderInvoiceCategorySelects();
 renderInvoiceProductSelect();
 renderInvoiceItems();
 renderInvoiceHistory();
-const barcodeInput = document.getElementById('barcodeInput');
-if (barcodeInput && window.matchMedia('(min-width: 769px)').matches) barcodeInput.focus();
 }
 if (tabId === 'history') renderHistory();
 if (tabId === 'calendar') renderCalendar();
@@ -3654,6 +3736,8 @@ document.getElementById('storePhone').value = appData.settings.phone || '';
 document.getElementById('storeAddress').value = appData.settings.address || '';
 document.getElementById('vatPercent').value = Number(appData.settings.vat || 0);
 document.getElementById('printMessage').value = appData.settings.print_message || '';
+const blockCb = document.getElementById('blockMobileToggle');
+if (blockCb) blockCb.checked = !!appData.settings.block_mobile;
 }
 function fillInvoiceForm() {
 document.getElementById('invoiceIdInput').value = invoiceId || '';
@@ -3667,6 +3751,7 @@ if (el) { el.oninput = onCustomerInput; }
 });
 }
 async function persistSettings(showAlert) {
+const blockCb = document.getElementById('blockMobileToggle');
 const payload = {
 name: document.getElementById('storeName').value.trim(),
 phone: document.getElementById('storePhone').value.trim(),
@@ -3676,7 +3761,8 @@ language: appData.settings.language || 'fa',
 calendar: appData.settings.calendar || 'jalali',
 vat: parseFloat(document.getElementById('vatPercent').value) || 0,
 theme: appData.settings.theme || 'light',
-print_message: document.getElementById('printMessage').value.trim()
+print_message: document.getElementById('printMessage').value.trim(),
+block_mobile: blockCb ? blockCb.checked : !!appData.settings.block_mobile
 };
 const result = await api('save_settings', payload);
 if (result.ok) {
@@ -3747,7 +3833,7 @@ if (file) handleBackupFile(file);
 }
 function csvEscape(value) {
 let v = String(value);
-if (/[",\n\r]/.test(v)) { v = '"' + v.replace(/"/g, '""') + '"'; }
+if (/[",\r\n]/.test(v)) { v = '"' + v.replace(/"/g, '""') + '"'; }
 return v;
 }
 function exportReportCsv() {
@@ -4264,7 +4350,7 @@ const result = await api('get');
 if (!result.ok) { alert(result.error || t('error')); return; }
 appData.settings = Object.assign({
 name: '', phone: '', address: '', currency: 'IRT', language: 'fa',
-calendar: 'jalali', installed: false, currency_locked: false, vat: 0, theme: 'light', print_message: ''
+calendar: 'jalali', installed: false, currency_locked: false, vat: 0, theme: 'light', print_message: '', block_mobile: false
 }, result.settings);
 applyTheme(appData.settings.theme || 'light');
 if (!appData.settings.installed) {
@@ -4278,6 +4364,8 @@ document.body.classList.remove('app-active');
 appData.settings.language = installerLanguage;
 applyLanguage();
 renderInstallerChoices();
+updateBlockToggleVisibility();
+applyMobileBlock();
 return;
 }
 document.getElementById('installer').style.display = 'none';
@@ -4324,6 +4412,8 @@ calendarSettingApplied = true;
 }
 updateCalendarModeButtons();
 renderCalendar();
+updateBlockToggleVisibility();
+applyMobileBlock();
 }
 function generateInvoiceIdLocal() { return 'RSA-ID-' + Date.now().toString(36).toUpperCase(); }
 function generateInvoiceNumberLocal() {
@@ -4389,11 +4479,20 @@ function renderProducts() {
 renderCategorySelect();
 const box = document.getElementById('productsList');
 box.innerHTML = '';
-if (!appData.products.length) {
-box.innerHTML = '<div class="empty-state">' + escapeHtml(t('emptyProducts')) + '</div>';
+const searchEl = document.getElementById('productSearch');
+const searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+let list = appData.products;
+if (searchTerm) {
+list = list.filter(function (p) {
+return (p.name || '').toLowerCase().indexOf(searchTerm) !== -1 ||
+(p.category || '').toLowerCase().indexOf(searchTerm) !== -1;
+});
+}
+if (!list.length) {
+box.innerHTML = '<div class="empty-state">' + escapeHtml(searchTerm ? t('noProductFound') : t('emptyProducts')) + '</div>';
 return;
 }
-appData.products.forEach(function (product) {
+list.forEach(function (product) {
 const row = document.createElement('div');
 row.className = 'list-item';
 const info = document.createElement('div');
@@ -4402,10 +4501,7 @@ title.textContent = product.name;
 const meta = document.createElement('div');
 meta.className = 'muted';
 const stockText = t('stockLabel') + ': ' + formatNumber(Number(product.stock || 0));
-let metaHtml = escapeHtml(product.category) + ' - ' + escapeHtml(formatMoney(product.price)) + ' | ' + (isLowStock(product) ? '<span class="stock-low">' + escapeHtml(stockText) + '</span>' : escapeHtml(stockText));
-if (product.barcode) {
-metaHtml += ' | ' + escapeHtml(t('barcodeLabel')) + ': ' + escapeHtml(product.barcode);
-}
+const metaHtml = escapeHtml(product.category) + ' - ' + escapeHtml(formatMoney(product.price)) + ' | ' + (isLowStock(product) ? '<span class="stock-low">' + escapeHtml(stockText) + '</span>' : escapeHtml(stockText));
 meta.innerHTML = metaHtml;
 info.appendChild(title);
 info.appendChild(meta);
@@ -4420,16 +4516,10 @@ box.appendChild(row);
 });
 }
 async function addProduct() {
-const barcode = document.getElementById('productBarcode').value.trim();
-if (barcode && findProductByBarcode(barcode)) {
-toast(t('barcodeDuplicate'), 'error');
-return;
-}
 const payload = {
 name: document.getElementById('productName').value.trim(),
 category: document.getElementById('productCategory').value,
 price: document.getElementById('productPrice').value,
-barcode: barcode,
 stock: parseFloat(document.getElementById('productStock').value) || 0,
 stock_alert: parseFloat(document.getElementById('productStockAlert').value) || 0
 };
@@ -4439,7 +4529,6 @@ if (result.ok) {
 document.getElementById('productName').value = '';
 document.getElementById('productCategory').value = '';
 document.getElementById('productPrice').value = '';
-document.getElementById('productBarcode').value = '';
 document.getElementById('productStock').value = '0';
 document.getElementById('productStockAlert').value = '0';
 await loadData();
@@ -4592,8 +4681,6 @@ customer_name: '', customer_phone: '', note: ''
 });
 await loadData();
 toast(t('saleRecorded'), 'success');
-const barcodeInput = document.getElementById('barcodeInput');
-if (barcodeInput && window.matchMedia('(min-width: 769px)').matches) barcodeInput.focus();
 } else {
 toast(result.error || t('error'), 'error');
 }
@@ -5359,12 +5446,11 @@ extraLines: dateTimeLines
 window.print();
 }
 document.addEventListener('keydown', function (e) {
-if (e.key === 'Escape') {
-const m = document.getElementById('scanModal');
-if (m && m.style.display === 'flex') closeCameraScan();
-}
+if (e.key === 'Escape') closeMobileMenu();
 });
 initRestoreDrop();
+renderDeviceInfo();
+updateBlockToggleVisibility();
 loadData();
 </script>
 </body>
