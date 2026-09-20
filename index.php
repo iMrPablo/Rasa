@@ -1,7 +1,7 @@
 <?php
 $storageDirectory = __DIR__ . '/rasa_data';
 if (!is_dir($storageDirectory)) {
-@mkdir($storageDirectory, 0775, true);
+    @mkdir($storageDirectory, 0775, true);
 }
 $settingsFile = $storageDirectory . '/settings.json';
 $categoriesFile = $storageDirectory . '/categories.json';
@@ -12,1017 +12,1018 @@ $returnsFile = $storageDirectory . '/returns.json';
 $movesFile = $storageDirectory . '/stock_moves.json';
 $htaccessFile = $storageDirectory . '/.htaccess';
 if (!file_exists($htaccessFile)) {
-@file_put_contents($htaccessFile, "Require all denied");
+    @file_put_contents($htaccessFile, "Require all denied");
 }
 if (!file_exists($settingsFile)) {
-@file_put_contents(
-$settingsFile,
-json_encode([
-'name' => '',
-'phone' => '',
-'address' => '',
-'currency' => 'IRT',
-'language' => 'fa',
-'calendar' => 'jalali',
-'installed' => false,
-'currency_locked' => false,
-'vat' => 0,
-'theme' => 'light',
-'print_message' => '',
-'block_mobile' => false
-], JSON_UNESCAPED_UNICODE),
-LOCK_EX
-);
+    @file_put_contents(
+        $settingsFile,
+        json_encode([
+            'name' => '',
+            'phone' => '',
+            'address' => '',
+            'currency' => 'IRT',
+            'language' => 'fa',
+            'calendar' => 'jalali',
+            'installed' => false,
+            'currency_locked' => false,
+            'vat' => 0,
+            'theme' => 'light',
+            'print_message' => '',
+            'block_mobile' => false
+        ], JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
 }
 if (!file_exists($categoriesFile)) {
-@file_put_contents($categoriesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($categoriesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 if (!file_exists($productsFile)) {
-@file_put_contents($productsFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($productsFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 if (!file_exists($invoiceFile)) {
-@file_put_contents(
-$invoiceFile,
-json_encode([
-'items' => [],
-'discount' => 0,
-'discount_type' => 'amount',
-'invoice_id' => '',
-'invoice_number' => '',
-'customer_name' => '',
-'customer_phone' => '',
-'note' => ''
-], JSON_UNESCAPED_UNICODE),
-LOCK_EX
-);
+    @file_put_contents(
+        $invoiceFile,
+        json_encode([
+            'items' => [],
+            'discount' => 0,
+            'discount_type' => 'amount',
+            'invoice_id' => '',
+            'invoice_number' => '',
+            'customer_name' => '',
+            'customer_phone' => '',
+            'note' => ''
+        ], JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
 }
 if (!file_exists($salesFile)) {
-@file_put_contents($salesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($salesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 if (!file_exists($returnsFile)) {
-@file_put_contents($returnsFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($returnsFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 if (!file_exists($movesFile)) {
-@file_put_contents($movesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($movesFile, json_encode([], JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 function readJsonFile($file, $default)
 {
-if (!file_exists($file)) {
-return $default;
-}
-$content = @file_get_contents($file);
-if ($content === false) {
-return $default;
-}
-$decoded = json_decode($content, true);
-return is_array($decoded) ? $decoded : $default;
+    if (!file_exists($file)) {
+        return $default;
+    }
+    $content = @file_get_contents($file);
+    if ($content === false) {
+        return $default;
+    }
+    $decoded = json_decode($content, true);
+    return is_array($decoded) ? $decoded : $default;
 }
 function writeJsonFile($file, $data)
 {
-return @file_put_contents($file, json_encode($data, JSON_UNESCAPED_UNICODE), LOCK_EX) !== false;
+    return @file_put_contents($file, json_encode($data, JSON_UNESCAPED_UNICODE), LOCK_EX) !== false;
 }
 function createId()
 {
-return function_exists('random_bytes') ? bin2hex(random_bytes(8)) : uniqid('', true);
+    return function_exists('random_bytes') ? bin2hex(random_bytes(8)) : uniqid('', true);
 }
 function generateInvoiceId()
 {
-$suffix = function_exists('random_bytes') ? strtoupper(bin2hex(random_bytes(2))) : strtoupper(substr(uniqid('', true), -4));
-return 'RSA-ID-' . $suffix;
+    $suffix = function_exists('random_bytes') ? strtoupper(bin2hex(random_bytes(2))) : strtoupper(substr(uniqid('', true), -4));
+    return 'RSA-ID-' . $suffix;
 }
 function generateInvoiceNumber($sales)
 {
-$maxNum = 0;
-foreach ($sales as $sale) {
-if (isset($sale['invoice_number']) && preg_match('/^RSA-(\d+)$/', $sale['invoice_number'], $matches)) {
-$num = (int)$matches[1];
-if ($num > $maxNum) $maxNum = $num;
-}
-}
-return 'RSA-' . str_pad($maxNum + 1, 8, '0', STR_PAD_LEFT);
+    $maxNum = 0;
+    foreach ($sales as $sale) {
+        if (isset($sale['invoice_number']) && preg_match('/^RSA-(\d+)$/', $sale['invoice_number'], $matches)) {
+            $num = (int)$matches[1];
+            if ($num > $maxNum) $maxNum = $num;
+        }
+    }
+    return 'RSA-' . str_pad($maxNum + 1, 8, '0', STR_PAD_LEFT);
 }
 function jsonResponse($data)
 {
-echo json_encode($data, JSON_UNESCAPED_UNICODE);
-exit;
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 function jalDiv($a, $b)
 {
-return intdiv((int)$a, (int)$b);
+    return intdiv((int)$a, (int)$b);
 }
 function jalMod($a, $b)
 {
-$a = (int)$a;
-$b = (int)$b;
-return $a - intdiv($a, $b) * $b;
+    $a = (int)$a;
+    $b = (int)$b;
+    return $a - intdiv($a, $b) * $b;
 }
 function jalCal($jy)
 {
-$breaks = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
-$gy = $jy + 621;
-$leapJ = -14;
-$jp = $breaks[0];
-$jump = 0;
-$bl = count($breaks);
-for ($i = 1; $i < $bl; $i++) {
-$jm = $breaks[$i];
-$jump = $jm - $jp;
-if ($jy < $jm) {
-break;
-}
-$leapJ = $leapJ + jalDiv($jump, 33) * 8 + jalDiv(jalMod($jump, 33), 4);
-$jp = $jm;
-}
-$n = $jy - $jp;
-$leapJ = $leapJ + jalDiv($n, 33) * 8 + jalDiv(jalMod($n, 33) + 3, 4);
-if (jalMod($jump, 33) === 4 && $jump - $n === 4) {
-$leapJ += 1;
-}
-$leapG = jalDiv($gy, 4) - jalDiv((jalDiv($gy, 100) + 1) * 3, 4) - 150;
-$march = 20 + $leapJ - $leapG;
-if ($jump - $n < 6) {
-$n = $n - $jump + jalDiv($jump + 4, 33) * 33;
-}
-$leap = jalMod(jalMod($n + 1, 33) - 1, 4);
-if ($leap === -1) {
-$leap = 4;
-}
-return ['leap' => $leap, 'gy' => $gy, 'march' => $march];
+    $breaks = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+    $gy = $jy + 621;
+    $leapJ = -14;
+    $jp = $breaks[0];
+    $jump = 0;
+    $bl = count($breaks);
+    for ($i = 1; $i < $bl; $i++) {
+        $jm = $breaks[$i];
+        $jump = $jm - $jp;
+        if ($jy < $jm) {
+            break;
+        }
+        $leapJ = $leapJ + jalDiv($jump, 33) * 8 + jalDiv(jalMod($jump, 33), 4);
+        $jp = $jm;
+    }
+    $n = $jy - $jp;
+    $leapJ = $leapJ + jalDiv($n, 33) * 8 + jalDiv(jalMod($n, 33) + 3, 4);
+    if (jalMod($jump, 33) === 4 && $jump - $n === 4) {
+        $leapJ += 1;
+    }
+    $leapG = jalDiv($gy, 4) - jalDiv((jalDiv($gy, 100) + 1) * 3, 4) - 150;
+    $march = 20 + $leapJ - $leapG;
+    if ($jump - $n < 6) {
+        $n = $n - $jump + jalDiv($jump + 4, 33) * 33;
+    }
+    $leap = jalMod(jalMod($n + 1, 33) - 1, 4);
+    if ($leap === -1) {
+        $leap = 4;
+    }
+    return ['leap' => $leap, 'gy' => $gy, 'march' => $march];
 }
 function g2d($gy, $gm, $gd)
 {
-return jalDiv(($gy + jalDiv($gm - 8, 6) + 100100) * 1461, 4)
-+ jalDiv(153 * jalMod($gm + 9, 12) + 2, 5)
-+ $gd - 34840408
-- jalDiv(jalDiv($gy + 100100 + jalDiv($gm - 8, 6), 100) * 3, 4)
-+ 752;
+    return jalDiv(($gy + jalDiv($gm - 8, 6) + 100100) * 1461, 4)
+        + jalDiv(153 * jalMod($gm + 9, 12) + 2, 5)
+        + $gd - 34840408
+        - jalDiv(jalDiv($gy + 100100 + jalDiv($gm - 8, 6), 100) * 3, 4)
+        + 752;
 }
 function d2g($jdn)
 {
-$j = 4 * $jdn + 139361631;
-$j = $j + jalDiv(jalDiv(4 * $jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
-$i = jalDiv(jalMod($j, 1461), 4) * 5 + 308;
-$gd = jalDiv(jalMod($i, 153), 5) + 1;
-$gm = jalMod(jalDiv($i, 153), 12) + 1;
-$gy = jalDiv($j, 1461) - 100100 + jalDiv(8 - $gm, 6);
-return ['gy' => $gy, 'gm' => $gm, 'gd' => $gd];
+    $j = 4 * $jdn + 139361631;
+    $j = $j + jalDiv(jalDiv(4 * $jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
+    $i = jalDiv(jalMod($j, 1461), 4) * 5 + 308;
+    $gd = jalDiv(jalMod($i, 153), 5) + 1;
+    $gm = jalMod(jalDiv($i, 153), 12) + 1;
+    $gy = jalDiv($j, 1461) - 100100 + jalDiv(8 - $gm, 6);
+    return ['gy' => $gy, 'gm' => $gm, 'gd' => $gd];
 }
 function j2d($jy, $jm, $jd)
 {
-$r = jalCal($jy);
-return g2d($r['gy'], 3, $r['march']) + ($jm - 1) * 31 - jalDiv($jm, 7) * ($jm - 7) + $jd - 1;
+    $r = jalCal($jy);
+    return g2d($r['gy'], 3, $r['march']) + ($jm - 1) * 31 - jalDiv($jm, 7) * ($jm - 7) + $jd - 1;
 }
 function d2j($jdn)
 {
-$g = d2g($jdn);
-$gy = $g['gy'];
-$jy = $gy - 621;
-$r = jalCal($jy);
-$jdn1f = g2d($gy, 3, $r['march']);
-$k = $jdn - $jdn1f;
-if ($k >= 0) {
-if ($k <= 185) {
-return [
-'jy' => $jy,
-'jm' => 1 + jalDiv($k, 31),
-'jd' => jalMod($k, 31) + 1
-];
-}
-$k -= 186;
-} else {
-$jy -= 1;
-$k += 179;
-if ($r['leap'] === 1) {
-$k += 1;
-}
-}
-return [
-'jy' => $jy,
-'jm' => 7 + jalDiv($k, 30),
-'jd' => jalMod($k, 30) + 1
-];
+    $g = d2g($jdn);
+    $gy = $g['gy'];
+    $jy = $gy - 621;
+    $r = jalCal($jy);
+    $jdn1f = g2d($gy, 3, $r['march']);
+    $k = $jdn - $jdn1f;
+    if ($k >= 0) {
+        if ($k <= 185) {
+            return [
+                'jy' => $jy,
+                'jm' => 1 + jalDiv($k, 31),
+                'jd' => jalMod($k, 31) + 1
+            ];
+        }
+        $k -= 186;
+    } else {
+        $jy -= 1;
+        $k += 179;
+        if ($r['leap'] === 1) {
+            $k += 1;
+        }
+    }
+    return [
+        'jy' => $jy,
+        'jm' => 7 + jalDiv($k, 30),
+        'jd' => jalMod($k, 30) + 1
+    ];
 }
 function gregorianToJalali($gy, $gm, $gd)
 {
-$d = d2j(g2d($gy, $gm, $gd));
-return [$d['jy'], $d['jm'], $d['jd']];
+    $d = d2j(g2d($gy, $gm, $gd));
+    return [$d['jy'], $d['jm'], $d['jd']];
 }
 function formatJalali($jy, $jm, $jd)
 {
-return sprintf('%04d/%02d/%02d', $jy, $jm, $jd);
+    return sprintf('%04d/%02d/%02d', $jy, $jm, $jd);
 }
 if (isset($_GET['api'])) {
-header('Content-Type: application/json; charset=utf-8');
-$action = $_GET['action'] ?? '';
-$payload = json_decode(file_get_contents('php://input'), true);
-if (!is_array($payload)) {
-$payload = [];
-}
-$settings = readJsonFile($settingsFile, [
-'name' => '',
-'phone' => '',
-'address' => '',
-'currency' => 'IRT',
-'language' => 'fa',
-'calendar' => 'jalali',
-'installed' => false,
-'currency_locked' => false,
-'vat' => 0,
-'theme' => 'light',
-'print_message' => '',
-'block_mobile' => false
-]);
-if (is_array($settings) && !array_key_exists('installed', $settings)) {
-$settings['installed'] = true;
-$settings['currency_locked'] = true;
-writeJsonFile($settingsFile, $settings);
-}
-if (!isset($settings['installed'])) {
-$settings['installed'] = false;
-}
-if (!isset($settings['currency_locked'])) {
-$settings['currency_locked'] = false;
-}
-if (!isset($settings['vat']) || !is_numeric($settings['vat'])) {
-$settings['vat'] = 0;
-}
-if (!isset($settings['theme'])) {
-$settings['theme'] = 'light';
-}
-if (!isset($settings['print_message'])) {
-$settings['print_message'] = '';
-}
-if (!isset($settings['block_mobile'])) {
-$settings['block_mobile'] = false;
-}
-$categories = readJsonFile($categoriesFile, []);
-$products = readJsonFile($productsFile, []);
-$sales = readJsonFile($salesFile, []);
-$returns = readJsonFile($returnsFile, []);
-$moves = readJsonFile($movesFile, []);
-$invoiceData = readJsonFile($invoiceFile, [
-'items' => [],
-'discount' => 0,
-'discount_type' => 'amount',
-'invoice_id' => '',
-'invoice_number' => '',
-'customer_name' => '',
-'customer_phone' => '',
-'note' => ''
-]);
-$invoiceItems = [];
-$invoiceDiscount = 0;
-$invoiceDiscountType = 'amount';
-$invoiceId = '';
-$invoiceNumber = '';
-$invoiceCustomerName = '';
-$invoiceCustomerPhone = '';
-$invoiceNote = '';
-if (is_array($invoiceData)) {
-if (isset($invoiceData['items']) && is_array($invoiceData['items'])) {
-$invoiceItems = $invoiceData['items'];
-} else {
-$invoiceItems = $invoiceData;
-}
-if (isset($invoiceData['discount']) && is_numeric($invoiceData['discount'])) {
-$invoiceDiscount = (float)$invoiceData['discount'];
-}
-if (isset($invoiceData['discount_type'])) {
-$invoiceDiscountType = (string)$invoiceData['discount_type'];
-}
-if (isset($invoiceData['invoice_id'])) {
-$invoiceId = (string)$invoiceData['invoice_id'];
-}
-if (isset($invoiceData['invoice_number'])) {
-$invoiceNumber = (string)$invoiceData['invoice_number'];
-}
-if (isset($invoiceData['customer_name'])) {
-$invoiceCustomerName = (string)$invoiceData['customer_name'];
-}
-if (isset($invoiceData['customer_phone'])) {
-$invoiceCustomerPhone = (string)$invoiceData['customer_phone'];
-}
-if (isset($invoiceData['note'])) {
-$invoiceNote = (string)$invoiceData['note'];
-}
-}
-if ($invoiceId === '') {
-$invoiceId = generateInvoiceId();
-$invoiceNumber = generateInvoiceNumber($sales);
-writeJsonFile($invoiceFile, [
-'items' => $invoiceItems,
-'discount' => $invoiceDiscount,
-'discount_type' => $invoiceDiscountType,
-'invoice_id' => $invoiceId,
-'invoice_number' => $invoiceNumber,
-'customer_name' => $invoiceCustomerName,
-'customer_phone' => $invoiceCustomerPhone,
-'note' => $invoiceNote
-]);
-}
-if ($action === 'get') {
-$now = new DateTime();
-$todayGy = (int)$now->format('Y');
-$todayGm = (int)$now->format('n');
-$todayGd = (int)$now->format('j');
-$todayJ = gregorianToJalali($todayGy, $todayGm, $todayGd);
-$weekday = (int)$now->format('N');
-$daysSinceSaturday = ($weekday + 1) % 7;
-$weekStart = clone $now;
-$weekStart->setTime(0, 0, 0);
-if ($daysSinceSaturday > 0) {
-$weekStart->modify('-' . $daysSinceSaturday . ' days');
-}
-$weekEnd = clone $weekStart;
-$weekEnd->modify('+6 days');
-$weekEnd->setTime(23, 59, 59);
-$weekStartDate = $weekStart->format('Y-m-d');
-$weekEndDate = $weekEnd->format('Y-m-d');
-$weekStartJ = gregorianToJalali((int)$weekStart->format('Y'), (int)$weekStart->format('n'), (int)$weekStart->format('j'));
-$weekEndJ = gregorianToJalali((int)$weekEnd->format('Y'), (int)$weekEnd->format('n'), (int)$weekEnd->format('j'));
-$weekTotal = 0;
-$weekCount = 0;
-$monthTotal = 0;
-$monthCount = 0;
-foreach ($sales as $sale) {
-$saleTotal = isset($sale['total']) && is_numeric($sale['total']) ? (float)$sale['total'] : 0;
-$saleDate = isset($sale['date']) ? (string)$sale['date'] : '';
-if ($saleDate !== '' && $saleDate >= $weekStartDate && $saleDate <= $weekEndDate) {
-$weekTotal += $saleTotal;
-$weekCount++;
-}
-if (isset($sale['jy'], $sale['jm']) && (int)$sale['jy'] === $todayJ[0] && (int)$sale['jm'] === $todayJ[1]) {
-$monthTotal += $saleTotal;
-$monthCount++;
-}
-}
-jsonResponse([
-'ok' => true,
-'settings' => $settings,
-'categories' => $categories,
-'products' => $products,
-'returns' => array_reverse($returns),
-'stockMoves' => array_reverse(array_slice($moves, -150)),
-'invoiceItems' => $invoiceItems,
-'invoiceDiscount' => $invoiceDiscount,
-'invoiceDiscountType' => $invoiceDiscountType,
-'invoiceId' => $invoiceId,
-'invoiceNumber' => $invoiceNumber,
-'invoiceCustomerName' => $invoiceCustomerName,
-'invoiceCustomerPhone' => $invoiceCustomerPhone,
-'invoiceNote' => $invoiceNote,
-'sales' => array_reverse($sales),
-'history' => [
-'today' => [
-'jy' => $todayJ[0],
-'jm' => $todayJ[1],
-'jd' => $todayJ[2]
-],
-'todayJalali' => formatJalali($todayJ[0], $todayJ[1], $todayJ[2]),
-'weekStartJalali' => formatJalali($weekStartJ[0], $weekStartJ[1], $weekStartJ[2]),
-'weekEndJalali' => formatJalali($weekEndJ[0], $weekEndJ[1], $weekEndJ[2]),
-'weekTotal' => $weekTotal,
-'weekCount' => $weekCount,
-'monthTotal' => $monthTotal,
-'monthCount' => $monthCount
-]
-]);
-}
-if ($action === 'install') {
-if (!empty($settings['installed'])) {
-jsonResponse(['ok' => false, 'error' => 'قبلا نصب شده است']);
-}
-$allowedCurrencies = ['USD', 'EUR', 'OMR', 'IRT', 'IRR'];
-$allowedLanguages = ['fa', 'en', 'fr', 'de', 'es', 'en_GB'];
-$allowedCalendars = ['jalali', 'gregorian', 'both'];
-$currency = trim((string)($payload['currency'] ?? 'IRT'));
-$language = trim((string)($payload['language'] ?? 'fa'));
-$calendar = trim((string)($payload['calendar'] ?? 'jalali'));
-if (!in_array($currency, $allowedCurrencies)) $currency = 'IRT';
-if (!in_array($language, $allowedLanguages)) $language = 'fa';
-if (!in_array($calendar, $allowedCalendars)) $calendar = 'jalali';
-$settings = [
-'name' => isset($settings['name']) ? (string)$settings['name'] : '',
-'phone' => isset($settings['phone']) ? (string)$settings['phone'] : '',
-'address' => isset($settings['address']) ? (string)$settings['address'] : '',
-'currency' => $currency,
-'language' => $language,
-'calendar' => $calendar,
-'installed' => true,
-'currency_locked' => true,
-'vat' => isset($settings['vat']) && is_numeric($settings['vat']) ? (float)$settings['vat'] : 0,
-'theme' => isset($settings['theme']) ? (string)$settings['theme'] : 'light',
-'print_message' => isset($settings['print_message']) ? (string)$settings['print_message'] : '',
-'block_mobile' => !empty($settings['block_mobile'])
-];
-if (!writeJsonFile($settingsFile, $settings)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در نصب']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'save_settings') {
-$existingLocked = !empty($settings['currency_locked']);
-$existingCurrency = isset($settings['currency']) ? (string)$settings['currency'] : 'IRT';
-$submittedCurrency = trim((string)($payload['currency'] ?? $existingCurrency));
-if (!empty($settings['installed']) && $existingLocked) {
-$currency = $existingCurrency;
-} else {
-$currency = $submittedCurrency;
-}
-$vat = isset($payload['vat']) && is_numeric($payload['vat']) ? (float)$payload['vat'] : 0;
-if ($vat < 0) $vat = 0;
-$theme = trim((string)($payload['theme'] ?? 'light'));
-if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
-$settings = [
-'name' => trim((string)($payload['name'] ?? '')),
-'phone' => trim((string)($payload['phone'] ?? '')),
-'address' => trim((string)($payload['address'] ?? '')),
-'currency' => $currency,
-'language' => trim((string)($payload['language'] ?? 'fa')),
-'calendar' => trim((string)($payload['calendar'] ?? 'jalali')),
-'installed' => !empty($settings['installed']),
-'currency_locked' => $existingLocked,
-'vat' => $vat,
-'theme' => $theme,
-'print_message' => trim((string)($payload['print_message'] ?? (isset($settings['print_message']) ? $settings['print_message'] : ''))),
-'block_mobile' => !empty($payload['block_mobile'])
-];
-if (!writeJsonFile($settingsFile, $settings)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره تنظیمات']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'toggle_theme') {
-$theme = trim((string)($payload['theme'] ?? 'light'));
-if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
-$settings['theme'] = $theme;
-if (!writeJsonFile($settingsFile, $settings)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره تم']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'add_category') {
-$name = trim((string)($payload['name'] ?? ''));
-if ($name === '') {
-jsonResponse(['ok' => false, 'error' => 'نام دسته‌بندی را وارد کنید']);
-}
-foreach ($categories as $categoryItem) {
-if (trim((string)($categoryItem['name'] ?? '')) === $name) {
-jsonResponse(['ok' => false, 'error' => 'این دسته‌بندی قبلا ثبت شده است']);
-}
-}
-$categories[] = ['id' => createId(), 'name' => $name];
-if (!writeJsonFile($categoriesFile, array_values($categories))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره دسته‌بندی']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'delete_category') {
-$id = (string)($payload['id'] ?? '');
-$categories = array_values(array_filter($categories, function ($item) use ($id) {
-return ($item['id'] ?? '') !== $id;
-}));
-if (!writeJsonFile($categoriesFile, $categories)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در حذف دسته‌بندی']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'add_product') {
-$name = trim((string)($payload['name'] ?? ''));
-$category = trim((string)($payload['category'] ?? ''));
-$price = null;
-if (isset($payload['price']) && is_numeric($payload['price'])) {
-$price = (float)$payload['price'];
-}
-$stock = isset($payload['stock']) && is_numeric($payload['stock']) ? (float)$payload['stock'] : 0;
-$stockAlert = isset($payload['stock_alert']) && is_numeric($payload['stock_alert']) ? (float)$payload['stock_alert'] : 0;
-if ($stock < 0) $stock = 0;
-if ($stockAlert < 0) $stockAlert = 0;
-if ($name === '' || $category === '' || $price === null || $price < 0) {
-jsonResponse(['ok' => false, 'error' => 'نام، دسته‌بندی و قیمت معتبر وارد کنید']);
-}
-$products[] = ['id' => createId(), 'name' => $name, 'category' => $category, 'price' => $price, 'stock' => $stock, 'stock_alert' => $stockAlert];
-if (!writeJsonFile($productsFile, array_values($products))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره محصول']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'delete_product') {
-$id = (string)($payload['id'] ?? '');
-$products = array_values(array_filter($products, function ($item) use ($id) {
-return ($item['id'] ?? '') !== $id;
-}));
-if (!writeJsonFile($productsFile, $products)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در حذف محصول']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'delete_sale') {
-$id = (string)($payload['id'] ?? '');
-if ($id === '') {
-jsonResponse(['ok' => false, 'error' => 'شناسه فروش معتبر نیست']);
-}
-$before = count($sales);
-$sales = array_values(array_filter($sales, function ($item) use ($id) {
-return ($item['id'] ?? '') !== $id;
-}));
-if (count($sales) === $before) {
-jsonResponse(['ok' => false, 'error' => 'فروش یافت نشد']);
-}
-if (!writeJsonFile($salesFile, $sales)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در حذف فروش']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'stock_receive') {
-$pid = (string)($payload['product_id'] ?? '');
-$qty = isset($payload['quantity']) && is_numeric($payload['quantity']) ? (float)$payload['quantity'] : 0;
-$note = trim((string)($payload['note'] ?? ''));
-if ($qty < 1) {
-jsonResponse(['ok' => false, 'error' => 'تعداد معتبر وارد کنید']);
-}
-$now = new DateTime();
-$gy = (int)$now->format('Y');
-$gm = (int)$now->format('n');
-$gd = (int)$now->format('j');
-$j = gregorianToJalali($gy, $gm, $gd);
-$found = false;
-foreach ($products as $pi => $p) {
-if (($p['id'] ?? '') === $pid) {
-$cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
-$new = $cur + $qty;
-$products[$pi]['stock'] = $new;
-$moves[] = [
-'id' => createId(),
-'product_id' => $pid,
-'product_name' => (string)($p['name'] ?? ''),
-'type' => 'in',
-'quantity' => $qty,
-'resulting_stock' => $new,
-'note' => $note,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2])
-];
-$found = true;
-break;
-}
-}
-if (!$found) {
-jsonResponse(['ok' => false, 'error' => 'محصول یافت نشد']);
-}
-if (!writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در به‌روزرسانی موجودی']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'stock_count') {
-$pid = (string)($payload['product_id'] ?? '');
-$counted = isset($payload['counted']) && is_numeric($payload['counted']) ? (float)$payload['counted'] : -1;
-$note = trim((string)($payload['note'] ?? ''));
-if ($counted < 0) {
-jsonResponse(['ok' => false, 'error' => 'تعداد معتبر وارد کنید']);
-}
-$now = new DateTime();
-$gy = (int)$now->format('Y');
-$gm = (int)$now->format('n');
-$gd = (int)$now->format('j');
-$j = gregorianToJalali($gy, $gm, $gd);
-$found = false;
-foreach ($products as $pi => $p) {
-if (($p['id'] ?? '') === $pid) {
-$cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
-$diff = $counted - $cur;
-$products[$pi]['stock'] = $counted;
-if ($diff != 0) {
-$moves[] = [
-'id' => createId(),
-'product_id' => $pid,
-'product_name' => (string)($p['name'] ?? ''),
-'type' => 'count',
-'quantity' => $diff,
-'resulting_stock' => $counted,
-'note' => $note,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2])
-];
-}
-$found = true;
-break;
-}
-}
-if (!$found) {
-jsonResponse(['ok' => false, 'error' => 'محصول یافت نشد']);
-}
-if (!writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ثبت انبارگردانی']);
-}
-jsonResponse(['ok' => true]);
-}
-if ($action === 'record_return') {
-$saleId = (string)($payload['sale_id'] ?? '');
-$reqItems = isset($payload['items']) && is_array($payload['items']) ? $payload['items'] : [];
-$note = trim((string)($payload['note'] ?? ''));
-$sale = null;
-foreach ($sales as $s) {
-if (($s['id'] ?? '') === $saleId) {
-$sale = $s;
-break;
-}
-}
-if ($sale === null) {
-jsonResponse(['ok' => false, 'error' => 'فروش یافت نشد']);
-}
-$returnedMap = [];
-foreach ($returns as $r) {
-if (($r['sale_id'] ?? '') !== $saleId) continue;
-$rItems = isset($r['items']) && is_array($r['items']) ? $r['items'] : [];
-foreach ($rItems as $ri) {
-$idx = (int)($ri['item_index'] ?? 0);
-$returnedMap[$idx] = (isset($returnedMap[$idx]) ? $returnedMap[$idx] : 0) + (int)($ri['quantity'] ?? 0);
-}
-}
-$saleItems = isset($sale['items']) && is_array($sale['items']) ? $sale['items'] : [];
-$cleanItems = [];
-$total = 0;
-foreach ($reqItems as $req) {
-if (!is_array($req)) continue;
-$idx = (int)($req['index'] ?? -1);
-$qty = (int)($req['quantity'] ?? 0);
-if ($idx < 0 || !isset($saleItems[$idx])) continue;
-$it = $saleItems[$idx];
-$sold = (int)($it['quantity'] ?? 0);
-$already = isset($returnedMap[$idx]) ? $returnedMap[$idx] : 0;
-if ($qty < 1 || $qty > ($sold - $already)) continue;
-$price = isset($it['price']) && is_numeric($it['price']) ? (float)$it['price'] : 0;
-$cleanItems[] = [
-'item_index' => $idx,
-'name' => (string)($it['name'] ?? ''),
-'category' => (string)($it['category'] ?? ''),
-'price' => $price,
-'quantity' => $qty,
-'product_id' => isset($it['product_id']) ? (string)$it['product_id'] : ''
-];
-$total += $price * $qty;
-$returnedMap[$idx] = $already + $qty;
-}
-if (!$cleanItems) {
-jsonResponse(['ok' => false, 'error' => 'هیچ قلمی برای مرجوعی انتخاب نشده است']);
-}
-$now = new DateTime();
-$gy = (int)$now->format('Y');
-$gm = (int)$now->format('n');
-$gd = (int)$now->format('j');
-$j = gregorianToJalali($gy, $gm, $gd);
-foreach ($cleanItems as $ci) {
-if ($ci['product_id'] === '') continue;
-foreach ($products as $pi => $p) {
-if (($p['id'] ?? '') === $ci['product_id']) {
-$cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
-$new = $cur + $ci['quantity'];
-$products[$pi]['stock'] = $new;
-$moves[] = [
-'id' => createId(),
-'product_id' => $ci['product_id'],
-'product_name' => $ci['name'],
-'type' => 'return',
-'quantity' => $ci['quantity'],
-'resulting_stock' => $new,
-'note' => $note,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2])
-];
-break;
-}
-}
-}
-$returnNumber = 'RET-' . str_pad(count($returns) + 1, 6, '0', STR_PAD_LEFT);
-$returns[] = [
-'id' => createId(),
-'return_number' => $returnNumber,
-'sale_id' => $saleId,
-'invoice_number' => isset($sale['invoice_number']) ? (string)$sale['invoice_number'] : '',
-'items' => $cleanItems,
-'total' => $total,
-'note' => $note,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2])
-];
-if (!writeJsonFile($returnsFile, array_values($returns)) || !writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ثبت مرجوعی']);
-}
-jsonResponse(['ok' => true, 'return_number' => $returnNumber]);
-}
-if ($action === 'save_invoice') {
-$items = $payload['items'] ?? [];
-$discount = isset($payload['discount']) && is_numeric($payload['discount']) ? (float)$payload['discount'] : 0;
-$discountType = trim((string)($payload['discount_type'] ?? 'amount'));
-$invoiceId = trim((string)($payload['invoice_id'] ?? ''));
-$invoiceNumber = trim((string)($payload['invoice_number'] ?? ''));
-$customerName = trim((string)($payload['customer_name'] ?? ''));
-$customerPhone = trim((string)($payload['customer_phone'] ?? ''));
-$note = trim((string)($payload['note'] ?? ''));
-if (!in_array($discountType, ['amount', 'percent'])) {
-$discountType = 'amount';
-}
-if ($invoiceId === '') {
-$invoiceId = generateInvoiceId();
-}
-if ($invoiceNumber === '') {
-$invoiceNumber = generateInvoiceNumber($sales);
-}
-if ($discount < 0) $discount = 0;
-if (!is_array($items)) {
-jsonResponse(['ok' => false, 'error' => 'لیست فاکتور معتبر نیست']);
-}
-$cleanItems = [];
-foreach ($items as $item) {
-if (!is_array($item)) continue;
-$name = trim((string)($item['name'] ?? ''));
-$category = trim((string)($item['category'] ?? ''));
-$price = null;
-if (isset($item['price']) && is_numeric($item['price'])) {
-$price = (float)$item['price'];
-}
-$quantity = (int)($item['quantity'] ?? 0);
-if ($name === '' || $price === null || $price < 0 || $quantity < 1) continue;
-$cleanItems[] = [
-'name' => $name,
-'category' => $category,
-'price' => $price,
-'quantity' => $quantity,
-'product_id' => isset($item['product_id']) ? (string)$item['product_id'] : ''
-];
-}
-if (!writeJsonFile($invoiceFile, [
-'items' => $cleanItems,
-'discount' => $discount,
-'discount_type' => $discountType,
-'invoice_id' => $invoiceId,
-'invoice_number' => $invoiceNumber,
-'customer_name' => $customerName,
-'customer_phone' => $customerPhone,
-'note' => $note
-])) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره فاکتور']);
-}
-jsonResponse(['ok' => true, 'invoice_id' => $invoiceId, 'invoice_number' => $invoiceNumber]);
-}
-if ($action === 'record_sale') {
-$items = $payload['items'] ?? [];
-$discount = isset($payload['discount']) && is_numeric($payload['discount']) ? (float)$payload['discount'] : 0;
-$discountType = trim((string)($payload['discount_type'] ?? 'amount'));
-$invoiceId = trim((string)($payload['invoice_id'] ?? ''));
-$invoiceNumber = trim((string)($payload['invoice_number'] ?? ''));
-$customerName = trim((string)($payload['customer_name'] ?? ''));
-$customerPhone = trim((string)($payload['customer_phone'] ?? ''));
-$note = trim((string)($payload['note'] ?? ''));
-if (!in_array($discountType, ['amount', 'percent'])) {
-$discountType = 'amount';
-}
-if ($invoiceId === '') $invoiceId = generateInvoiceId();
-if ($invoiceNumber === '') $invoiceNumber = generateInvoiceNumber($sales);
-if ($discount < 0) $discount = 0;
-if (!is_array($items)) {
-jsonResponse(['ok' => false, 'error' => 'لیست فاکتور معتبر نیست']);
-}
-$cleanItems = [];
-$subtotal = 0;
-foreach ($items as $item) {
-if (!is_array($item)) continue;
-$name = trim((string)($item['name'] ?? ''));
-$category = trim((string)($item['category'] ?? ''));
-$price = null;
-if (isset($item['price']) && is_numeric($item['price'])) {
-$price = (float)$item['price'];
-}
-$quantity = (int)($item['quantity'] ?? 0);
-if ($name === '' || $price === null || $price < 0 || $quantity < 1) continue;
-$cleanItems[] = [
-'name' => $name,
-'category' => $category,
-'price' => $price,
-'quantity' => $quantity,
-'product_id' => isset($item['product_id']) ? (string)$item['product_id'] : ''
-];
-$subtotal += $price * $quantity;
-}
-if (!$cleanItems) {
-jsonResponse(['ok' => false, 'error' => 'فاکتور خالی است']);
-}
-$discountAmount = 0;
-if ($discountType === 'percent') {
-if ($discount > 100) $discount = 100;
-$discountAmount = $subtotal * $discount / 100;
-} else {
-if ($discount > $subtotal) $discount = $subtotal;
-$discountAmount = $discount;
-}
-$vatRate = isset($settings['vat']) && is_numeric($settings['vat']) ? (float)$settings['vat'] : 0;
-if ($vatRate < 0) $vatRate = 0;
-$vatBase = $subtotal - $discountAmount;
-$vatAmount = $vatBase * $vatRate / 100;
-$total = $vatBase + $vatAmount;
-$now = new DateTime();
-$gy = (int)$now->format('Y');
-$gm = (int)$now->format('n');
-$gd = (int)$now->format('j');
-$j = gregorianToJalali($gy, $gm, $gd);
-foreach ($cleanItems as $ci) {
-if (($ci['product_id'] ?? '') === '') continue;
-foreach ($products as $pi => $p) {
-if (($p['id'] ?? '') === $ci['product_id']) {
-$cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
-$new = $cur - $ci['quantity'];
-$products[$pi]['stock'] = $new;
-$moves[] = [
-'id' => createId(),
-'product_id' => $ci['product_id'],
-'product_name' => $ci['name'],
-'type' => 'sale',
-'quantity' => -$ci['quantity'],
-'resulting_stock' => $new,
-'note' => $invoiceNumber,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2])
-];
-break;
-}
-}
-}
-$sales[] = [
-'id' => createId(),
-'invoice_id' => $invoiceId,
-'invoice_number' => $invoiceNumber,
-'datetime' => $now->format('Y-m-d H:i:s'),
-'date' => $now->format('Y-m-d'),
-'jy' => $j[0],
-'jm' => $j[1],
-'jd' => $j[2],
-'jalali' => formatJalali($j[0], $j[1], $j[2]),
-'items' => $cleanItems,
-'customer_name' => $customerName,
-'customer_phone' => $customerPhone,
-'note' => $note,
-'subtotal' => $subtotal,
-'discount' => $discountAmount,
-'discount_value' => $discount,
-'discount_type' => $discountType,
-'vat_rate' => $vatRate,
-'vat' => $vatAmount,
-'total' => $total
-];
-if (!writeJsonFile($salesFile, array_values($sales)) || !writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در ثبت فروش']);
-}
-jsonResponse(['ok' => true, 'invoice_id' => $invoiceId, 'invoice_number' => $invoiceNumber]);
-}
-if ($action === 'export_backup') {
-jsonResponse([
-'ok' => true,
-'backup' => [
-'settings' => $settings,
-'categories' => $categories,
-'products' => $products,
-'sales' => $sales,
-'returns' => $returns,
-'exported_at' => date('Y-m-d H:i:s')
-]
-]);
-}
-if ($action === 'restore_backup') {
-$backup = isset($payload['backup']) && is_array($payload['backup']) ? $payload['backup'] : null;
-if ($backup === null) {
-jsonResponse(['ok' => false, 'error' => 'فایل پشتیبان معتبر نیست']);
-}
-$restoreSettings = !empty($payload['restore_settings']);
-$restoreCategories = !empty($payload['restore_categories']);
-$restoreProducts = !empty($payload['restore_products']);
-$restoreSales = !empty($payload['restore_sales']);
-if (!$restoreSettings && !$restoreCategories && !$restoreProducts && !$restoreSales) {
-jsonResponse(['ok' => false, 'error' => 'حداقل یک بخش را برای بازیابی انتخاب کنید']);
-}
-if ($restoreSettings) {
-$bs = isset($backup['settings']) && is_array($backup['settings']) ? $backup['settings'] : null;
-if ($bs === null) {
-jsonResponse(['ok' => false, 'error' => 'بخش تنظیمات در فایل پشتیبان معتبر نیست']);
-}
-$allowedCurrencies = ['USD', 'EUR', 'OMR', 'IRT', 'IRR'];
-$allowedLanguages = ['fa', 'en', 'fr', 'de', 'es', 'en_GB'];
-$allowedCalendars = ['jalali', 'gregorian', 'both'];
-$currency = trim((string)($bs['currency'] ?? 'IRT'));
-$language = trim((string)($bs['language'] ?? 'fa'));
-$calendar = trim((string)($bs['calendar'] ?? 'jalali'));
-if (!in_array($currency, $allowedCurrencies)) $currency = 'IRT';
-if (!in_array($language, $allowedLanguages)) $language = 'fa';
-if (!in_array($calendar, $allowedCalendars)) $calendar = 'jalali';
-$existingLocked = !empty($settings['currency_locked']);
-if (!empty($settings['installed']) && $existingLocked) {
-$currency = isset($settings['currency']) ? (string)$settings['currency'] : $currency;
-}
-$vat = isset($bs['vat']) && is_numeric($bs['vat']) ? (float)$bs['vat'] : 0;
-if ($vat < 0) $vat = 0;
-$theme = trim((string)($bs['theme'] ?? 'light'));
-if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
-$newSettings = [
-'name' => trim((string)($bs['name'] ?? '')),
-'phone' => trim((string)($bs['phone'] ?? '')),
-'address' => trim((string)($bs['address'] ?? '')),
-'currency' => $currency,
-'language' => $language,
-'calendar' => $calendar,
-'installed' => !empty($settings['installed']),
-'currency_locked' => $existingLocked,
-'vat' => $vat,
-'theme' => $theme,
-'print_message' => trim((string)($bs['print_message'] ?? '')),
-'block_mobile' => !empty($bs['block_mobile'])
-];
-if (!writeJsonFile($settingsFile, $newSettings)) {
-jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی تنظیمات']);
-}
-$settings = $newSettings;
-}
-if ($restoreCategories) {
-$bc = isset($backup['categories']) && is_array($backup['categories']) ? $backup['categories'] : null;
-if ($bc === null) {
-jsonResponse(['ok' => false, 'error' => 'بخش دسته‌بندی‌ها در فایل پشتیبان معتبر نیست']);
-}
-$cleanCategories = [];
-foreach ($bc as $item) {
-if (!is_array($item)) continue;
-$name = trim((string)($item['name'] ?? ''));
-if ($name === '') continue;
-$cleanCategories[] = [
-'id' => isset($item['id']) && $item['id'] !== '' ? (string)$item['id'] : createId(),
-'name' => $name
-];
-}
-if (!writeJsonFile($categoriesFile, array_values($cleanCategories))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی دسته‌بندی‌ها']);
-}
-}
-if ($restoreProducts) {
-$bp = isset($backup['products']) && is_array($backup['products']) ? $backup['products'] : null;
-if ($bp === null) {
-jsonResponse(['ok' => false, 'error' => 'بخش محصولات در فایل پشتیبان معتبر نیست']);
-}
-$cleanProducts = [];
-foreach ($bp as $item) {
-if (!is_array($item)) continue;
-$name = trim((string)($item['name'] ?? ''));
-$category = trim((string)($item['category'] ?? ''));
-$price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : null;
-if ($name === '' || $price === null || $price < 0) continue;
-$cleanProducts[] = [
-'id' => isset($item['id']) && $item['id'] !== '' ? (string)$item['id'] : createId(),
-'name' => $name,
-'category' => $category,
-'price' => $price,
-'stock' => isset($item['stock']) && is_numeric($item['stock']) ? (float)$item['stock'] : 0,
-'stock_alert' => isset($item['stock_alert']) && is_numeric($item['stock_alert']) ? (float)$item['stock_alert'] : 0
-];
-}
-if (!writeJsonFile($productsFile, array_values($cleanProducts))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی محصولات']);
-}
-}
-if ($restoreSales) {
-$bsales = isset($backup['sales']) && is_array($backup['sales']) ? $backup['sales'] : null;
-if ($bsales === null) {
-jsonResponse(['ok' => false, 'error' => 'بخش تاریخچه فروش در فایل پشتیبان معتبر نیست']);
-}
-$cleanSales = [];
-foreach ($bsales as $item) {
-if (!is_array($item)) continue;
-$cleanSales[] = $item;
-}
-if (!writeJsonFile($salesFile, array_values($cleanSales))) {
-jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی تاریخچه فروش']);
-}
-}
-jsonResponse(['ok' => true]);
-}
-jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است']);
+    header('Content-Type: application/json; charset=utf-8');
+    $action = $_GET['action'] ?? '';
+    $payload = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($payload)) {
+        $payload = [];
+    }
+    $settings = readJsonFile($settingsFile, [
+        'name' => '',
+        'phone' => '',
+        'address' => '',
+        'currency' => 'IRT',
+        'language' => 'fa',
+        'calendar' => 'jalali',
+        'installed' => false,
+        'currency_locked' => false,
+        'vat' => 0,
+        'theme' => 'light',
+        'print_message' => '',
+        'block_mobile' => false
+    ]);
+    if (is_array($settings) && !array_key_exists('installed', $settings)) {
+        $settings['installed'] = true;
+        $settings['currency_locked'] = true;
+        writeJsonFile($settingsFile, $settings);
+    }
+    if (!isset($settings['installed'])) {
+        $settings['installed'] = false;
+    }
+    if (!isset($settings['currency_locked'])) {
+        $settings['currency_locked'] = false;
+    }
+    if (!isset($settings['vat']) || !is_numeric($settings['vat'])) {
+        $settings['vat'] = 0;
+    }
+    if (!isset($settings['theme'])) {
+        $settings['theme'] = 'light';
+    }
+    if (!isset($settings['print_message'])) {
+        $settings['print_message'] = '';
+    }
+    if (!isset($settings['block_mobile'])) {
+        $settings['block_mobile'] = false;
+    }
+    $categories = readJsonFile($categoriesFile, []);
+    $products = readJsonFile($productsFile, []);
+    $sales = readJsonFile($salesFile, []);
+    $returns = readJsonFile($returnsFile, []);
+    $moves = readJsonFile($movesFile, []);
+    $invoiceData = readJsonFile($invoiceFile, [
+        'items' => [],
+        'discount' => 0,
+        'discount_type' => 'amount',
+        'invoice_id' => '',
+        'invoice_number' => '',
+        'customer_name' => '',
+        'customer_phone' => '',
+        'note' => ''
+    ]);
+    $invoiceItems = [];
+    $invoiceDiscount = 0;
+    $invoiceDiscountType = 'amount';
+    $invoiceId = '';
+    $invoiceNumber = '';
+    $invoiceCustomerName = '';
+    $invoiceCustomerPhone = '';
+    $invoiceNote = '';
+    if (is_array($invoiceData)) {
+        if (isset($invoiceData['items']) && is_array($invoiceData['items'])) {
+            $invoiceItems = $invoiceData['items'];
+        } else {
+            $invoiceItems = $invoiceData;
+        }
+        if (isset($invoiceData['discount']) && is_numeric($invoiceData['discount'])) {
+            $invoiceDiscount = (float)$invoiceData['discount'];
+        }
+        if (isset($invoiceData['discount_type'])) {
+            $invoiceDiscountType = (string)$invoiceData['discount_type'];
+        }
+        if (isset($invoiceData['invoice_id'])) {
+            $invoiceId = (string)$invoiceData['invoice_id'];
+        }
+        if (isset($invoiceData['invoice_number'])) {
+            $invoiceNumber = (string)$invoiceData['invoice_number'];
+        }
+        if (isset($invoiceData['customer_name'])) {
+            $invoiceCustomerName = (string)$invoiceData['customer_name'];
+        }
+        if (isset($invoiceData['customer_phone'])) {
+            $invoiceCustomerPhone = (string)$invoiceData['customer_phone'];
+        }
+        if (isset($invoiceData['note'])) {
+            $invoiceNote = (string)$invoiceData['note'];
+        }
+    }
+    if ($invoiceId === '') {
+        $invoiceId = generateInvoiceId();
+        $invoiceNumber = generateInvoiceNumber($sales);
+        writeJsonFile($invoiceFile, [
+            'items' => $invoiceItems,
+            'discount' => $invoiceDiscount,
+            'discount_type' => $invoiceDiscountType,
+            'invoice_id' => $invoiceId,
+            'invoice_number' => $invoiceNumber,
+            'customer_name' => $invoiceCustomerName,
+            'customer_phone' => $invoiceCustomerPhone,
+            'note' => $invoiceNote
+        ]);
+    }
+    if ($action === 'get') {
+        $now = new DateTime();
+        $todayGy = (int)$now->format('Y');
+        $todayGm = (int)$now->format('n');
+        $todayGd = (int)$now->format('j');
+        $todayJ = gregorianToJalali($todayGy, $todayGm, $todayGd);
+        $weekday = (int)$now->format('N');
+        $daysSinceSaturday = ($weekday + 1) % 7;
+        $weekStart = clone $now;
+        $weekStart->setTime(0, 0, 0);
+        if ($daysSinceSaturday > 0) {
+            $weekStart->modify('-' . $daysSinceSaturday . ' days');
+        }
+        $weekEnd = clone $weekStart;
+        $weekEnd->modify('+6 days');
+        $weekEnd->setTime(23, 59, 59);
+        $weekStartDate = $weekStart->format('Y-m-d');
+        $weekEndDate = $weekEnd->format('Y-m-d');
+        $weekStartJ = gregorianToJalali((int)$weekStart->format('Y'), (int)$weekStart->format('n'), (int)$weekStart->format('j'));
+        $weekEndJ = gregorianToJalali((int)$weekEnd->format('Y'), (int)$weekEnd->format('n'), (int)$weekEnd->format('j'));
+        $weekTotal = 0;
+        $weekCount = 0;
+        $monthTotal = 0;
+        $monthCount = 0;
+        foreach ($sales as $sale) {
+            $saleTotal = isset($sale['total']) && is_numeric($sale['total']) ? (float)$sale['total'] : 0;
+            $saleDate = isset($sale['date']) ? (string)$sale['date'] : '';
+            if ($saleDate !== '' && $saleDate >= $weekStartDate && $saleDate <= $weekEndDate) {
+                $weekTotal += $saleTotal;
+                $weekCount++;
+            }
+            if (isset($sale['jy'], $sale['jm']) && (int)$sale['jy'] === $todayJ[0] && (int)$sale['jm'] === $todayJ[1]) {
+                $monthTotal += $saleTotal;
+                $monthCount++;
+            }
+        }
+        jsonResponse([
+            'ok' => true,
+            'settings' => $settings,
+            'categories' => $categories,
+            'products' => $products,
+            'returns' => array_reverse($returns),
+            'stockMoves' => array_reverse(array_slice($moves, -150)),
+            'invoiceItems' => $invoiceItems,
+            'invoiceDiscount' => $invoiceDiscount,
+            'invoiceDiscountType' => $invoiceDiscountType,
+            'invoiceId' => $invoiceId,
+            'invoiceNumber' => $invoiceNumber,
+            'invoiceCustomerName' => $invoiceCustomerName,
+            'invoiceCustomerPhone' => $invoiceCustomerPhone,
+            'invoiceNote' => $invoiceNote,
+            'sales' => array_reverse($sales),
+            'history' => [
+                'today' => [
+                    'jy' => $todayJ[0],
+                    'jm' => $todayJ[1],
+                    'jd' => $todayJ[2]
+                ],
+                'todayJalali' => formatJalali($todayJ[0], $todayJ[1], $todayJ[2]),
+                'weekStartJalali' => formatJalali($weekStartJ[0], $weekStartJ[1], $weekStartJ[2]),
+                'weekEndJalali' => formatJalali($weekEndJ[0], $weekEndJ[1], $weekEndJ[2]),
+                'weekTotal' => $weekTotal,
+                'weekCount' => $weekCount,
+                'monthTotal' => $monthTotal,
+                'monthCount' => $monthCount
+            ]
+        ]);
+    }
+    if ($action === 'install') {
+        if (!empty($settings['installed'])) {
+            jsonResponse(['ok' => false, 'error' => 'قبلا نصب شده است']);
+        }
+        $allowedCurrencies = ['USD', 'EUR', 'OMR', 'IRT', 'IRR', 'CNY', 'RUB'];
+        $allowedLanguages = ['fa', 'en', 'fr', 'de', 'es', 'en_GB', 'zh', 'ru'];
+        $allowedCalendars = ['jalali', 'gregorian', 'both'];
+        $currency = trim((string)($payload['currency'] ?? 'IRT'));
+        $language = trim((string)($payload['language'] ?? 'fa'));
+        $calendar = trim((string)($payload['calendar'] ?? 'jalali'));
+        if (!in_array($currency, $allowedCurrencies)) $currency = 'IRT';
+        if (!in_array($language, $allowedLanguages)) $language = 'fa';
+        if (!in_array($calendar, $allowedCalendars)) $calendar = 'jalali';
+        $settings = [
+            'name' => isset($settings['name']) ? (string)$settings['name'] : '',
+            'phone' => isset($settings['phone']) ? (string)$settings['phone'] : '',
+            'address' => isset($settings['address']) ? (string)$settings['address'] : '',
+            'currency' => $currency,
+            'language' => $language,
+            'calendar' => $calendar,
+            'installed' => true,
+            'currency_locked' => true,
+            'vat' => isset($settings['vat']) && is_numeric($settings['vat']) ? (float)$settings['vat'] : 0,
+            'theme' => isset($settings['theme']) ? (string)$settings['theme'] : 'light',
+            'print_message' => isset($settings['print_message']) ? (string)$settings['print_message'] : '',
+            'block_mobile' => !empty($settings['block_mobile'])
+        ];
+        if (!writeJsonFile($settingsFile, $settings)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در نصب']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'save_settings') {
+        $existingLocked = !empty($settings['currency_locked']);
+        $existingCurrency = isset($settings['currency']) ? (string)$settings['currency'] : 'IRT';
+        $submittedCurrency = trim((string)($payload['currency'] ?? $existingCurrency));
+        if (!empty($settings['installed']) && $existingLocked) {
+            $currency = $existingCurrency;
+        } else {
+            $allowedCurrencies = ['USD', 'EUR', 'OMR', 'IRT', 'IRR', 'CNY', 'RUB'];
+            $currency = in_array($submittedCurrency, $allowedCurrencies) ? $submittedCurrency : $existingCurrency;
+        }
+        $vat = isset($payload['vat']) && is_numeric($payload['vat']) ? (float)$payload['vat'] : 0;
+        if ($vat < 0) $vat = 0;
+        $theme = trim((string)($payload['theme'] ?? 'light'));
+        if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
+        $settings = [
+            'name' => trim((string)($payload['name'] ?? '')),
+            'phone' => trim((string)($payload['phone'] ?? '')),
+            'address' => trim((string)($payload['address'] ?? '')),
+            'currency' => $currency,
+            'language' => trim((string)($payload['language'] ?? 'fa')),
+            'calendar' => trim((string)($payload['calendar'] ?? 'jalali')),
+            'installed' => !empty($settings['installed']),
+            'currency_locked' => $existingLocked,
+            'vat' => $vat,
+            'theme' => $theme,
+            'print_message' => trim((string)($payload['print_message'] ?? (isset($settings['print_message']) ? $settings['print_message'] : ''))),
+            'block_mobile' => !empty($payload['block_mobile'])
+        ];
+        if (!writeJsonFile($settingsFile, $settings)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره تنظیمات']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'toggle_theme') {
+        $theme = trim((string)($payload['theme'] ?? 'light'));
+        if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
+        $settings['theme'] = $theme;
+        if (!writeJsonFile($settingsFile, $settings)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره تم']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'add_category') {
+        $name = trim((string)($payload['name'] ?? ''));
+        if ($name === '') {
+            jsonResponse(['ok' => false, 'error' => 'نام دسته‌بندی را وارد کنید']);
+        }
+        foreach ($categories as $categoryItem) {
+            if (trim((string)($categoryItem['name'] ?? '')) === $name) {
+                jsonResponse(['ok' => false, 'error' => 'این دسته‌بندی قبلا ثبت شده است']);
+            }
+        }
+        $categories[] = ['id' => createId(), 'name' => $name];
+        if (!writeJsonFile($categoriesFile, array_values($categories))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره دسته‌بندی']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'delete_category') {
+        $id = (string)($payload['id'] ?? '');
+        $categories = array_values(array_filter($categories, function ($item) use ($id) {
+            return ($item['id'] ?? '') !== $id;
+        }));
+        if (!writeJsonFile($categoriesFile, $categories)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در حذف دسته‌بندی']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'add_product') {
+        $name = trim((string)($payload['name'] ?? ''));
+        $category = trim((string)($payload['category'] ?? ''));
+        $price = null;
+        if (isset($payload['price']) && is_numeric($payload['price'])) {
+            $price = (float)$payload['price'];
+        }
+        $stock = isset($payload['stock']) && is_numeric($payload['stock']) ? (float)$payload['stock'] : 0;
+        $stockAlert = isset($payload['stock_alert']) && is_numeric($payload['stock_alert']) ? (float)$payload['stock_alert'] : 0;
+        if ($stock < 0) $stock = 0;
+        if ($stockAlert < 0) $stockAlert = 0;
+        if ($name === '' || $category === '' || $price === null || $price < 0) {
+            jsonResponse(['ok' => false, 'error' => 'نام، دسته‌بندی و قیمت معتبر وارد کنید']);
+        }
+        $products[] = ['id' => createId(), 'name' => $name, 'category' => $category, 'price' => $price, 'stock' => $stock, 'stock_alert' => $stockAlert];
+        if (!writeJsonFile($productsFile, array_values($products))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره محصول']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'delete_product') {
+        $id = (string)($payload['id'] ?? '');
+        $products = array_values(array_filter($products, function ($item) use ($id) {
+            return ($item['id'] ?? '') !== $id;
+        }));
+        if (!writeJsonFile($productsFile, $products)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در حذف محصول']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'delete_sale') {
+        $id = (string)($payload['id'] ?? '');
+        if ($id === '') {
+            jsonResponse(['ok' => false, 'error' => 'شناسه فروش معتبر نیست']);
+        }
+        $before = count($sales);
+        $sales = array_values(array_filter($sales, function ($item) use ($id) {
+            return ($item['id'] ?? '') !== $id;
+        }));
+        if (count($sales) === $before) {
+            jsonResponse(['ok' => false, 'error' => 'فروش یافت نشد']);
+        }
+        if (!writeJsonFile($salesFile, $sales)) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در حذف فروش']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'stock_receive') {
+        $pid = (string)($payload['product_id'] ?? '');
+        $qty = isset($payload['quantity']) && is_numeric($payload['quantity']) ? (float)$payload['quantity'] : 0;
+        $note = trim((string)($payload['note'] ?? ''));
+        if ($qty < 1) {
+            jsonResponse(['ok' => false, 'error' => 'تعداد معتبر وارد کنید']);
+        }
+        $now = new DateTime();
+        $gy = (int)$now->format('Y');
+        $gm = (int)$now->format('n');
+        $gd = (int)$now->format('j');
+        $j = gregorianToJalali($gy, $gm, $gd);
+        $found = false;
+        foreach ($products as $pi => $p) {
+            if (($p['id'] ?? '') === $pid) {
+                $cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
+                $new = $cur + $qty;
+                $products[$pi]['stock'] = $new;
+                $moves[] = [
+                    'id' => createId(),
+                    'product_id' => $pid,
+                    'product_name' => (string)($p['name'] ?? ''),
+                    'type' => 'in',
+                    'quantity' => $qty,
+                    'resulting_stock' => $new,
+                    'note' => $note,
+                    'datetime' => $now->format('Y-m-d H:i:s'),
+                    'date' => $now->format('Y-m-d'),
+                    'jy' => $j[0],
+                    'jm' => $j[1],
+                    'jd' => $j[2],
+                    'jalali' => formatJalali($j[0], $j[1], $j[2])
+                ];
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            jsonResponse(['ok' => false, 'error' => 'محصول یافت نشد']);
+        }
+        if (!writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در به‌روزرسانی موجودی']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'stock_count') {
+        $pid = (string)($payload['product_id'] ?? '');
+        $counted = isset($payload['counted']) && is_numeric($payload['counted']) ? (float)$payload['counted'] : -1;
+        $note = trim((string)($payload['note'] ?? ''));
+        if ($counted < 0) {
+            jsonResponse(['ok' => false, 'error' => 'تعداد معتبر وارد کنید']);
+        }
+        $now = new DateTime();
+        $gy = (int)$now->format('Y');
+        $gm = (int)$now->format('n');
+        $gd = (int)$now->format('j');
+        $j = gregorianToJalali($gy, $gm, $gd);
+        $found = false;
+        foreach ($products as $pi => $p) {
+            if (($p['id'] ?? '') === $pid) {
+                $cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
+                $diff = $counted - $cur;
+                $products[$pi]['stock'] = $counted;
+                if ($diff != 0) {
+                    $moves[] = [
+                        'id' => createId(),
+                        'product_id' => $pid,
+                        'product_name' => (string)($p['name'] ?? ''),
+                        'type' => 'count',
+                        'quantity' => $diff,
+                        'resulting_stock' => $counted,
+                        'note' => $note,
+                        'datetime' => $now->format('Y-m-d H:i:s'),
+                        'date' => $now->format('Y-m-d'),
+                        'jy' => $j[0],
+                        'jm' => $j[1],
+                        'jd' => $j[2],
+                        'jalali' => formatJalali($j[0], $j[1], $j[2])
+                    ];
+                }
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            jsonResponse(['ok' => false, 'error' => 'محصول یافت نشد']);
+        }
+        if (!writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ثبت انبارگردانی']);
+        }
+        jsonResponse(['ok' => true]);
+    }
+    if ($action === 'record_return') {
+        $saleId = (string)($payload['sale_id'] ?? '');
+        $reqItems = isset($payload['items']) && is_array($payload['items']) ? $payload['items'] : [];
+        $note = trim((string)($payload['note'] ?? ''));
+        $sale = null;
+        foreach ($sales as $s) {
+            if (($s['id'] ?? '') === $saleId) {
+                $sale = $s;
+                break;
+            }
+        }
+        if ($sale === null) {
+            jsonResponse(['ok' => false, 'error' => 'فروش یافت نشد']);
+        }
+        $returnedMap = [];
+        foreach ($returns as $r) {
+            if (($r['sale_id'] ?? '') !== $saleId) continue;
+            $rItems = isset($r['items']) && is_array($r['items']) ? $r['items'] : [];
+            foreach ($rItems as $ri) {
+                $idx = (int)($ri['item_index'] ?? 0);
+                $returnedMap[$idx] = (isset($returnedMap[$idx]) ? $returnedMap[$idx] : 0) + (int)($ri['quantity'] ?? 0);
+            }
+        }
+        $saleItems = isset($sale['items']) && is_array($sale['items']) ? $sale['items'] : [];
+        $cleanItems = [];
+        $total = 0;
+        foreach ($reqItems as $req) {
+            if (!is_array($req)) continue;
+            $idx = (int)($req['index'] ?? -1);
+            $qty = (int)($req['quantity'] ?? 0);
+            if ($idx < 0 || !isset($saleItems[$idx])) continue;
+            $it = $saleItems[$idx];
+            $sold = (int)($it['quantity'] ?? 0);
+            $already = isset($returnedMap[$idx]) ? $returnedMap[$idx] : 0;
+            if ($qty < 1 || $qty > ($sold - $already)) continue;
+            $price = isset($it['price']) && is_numeric($it['price']) ? (float)$it['price'] : 0;
+            $cleanItems[] = [
+                'item_index' => $idx,
+                'name' => (string)($it['name'] ?? ''),
+                'category' => (string)($it['category'] ?? ''),
+                'price' => $price,
+                'quantity' => $qty,
+                'product_id' => isset($it['product_id']) ? (string)$it['product_id'] : ''
+            ];
+            $total += $price * $qty;
+            $returnedMap[$idx] = $already + $qty;
+        }
+        if (!$cleanItems) {
+            jsonResponse(['ok' => false, 'error' => 'هیچ قلمی برای مرجوعی انتخاب نشده است']);
+        }
+        $now = new DateTime();
+        $gy = (int)$now->format('Y');
+        $gm = (int)$now->format('n');
+        $gd = (int)$now->format('j');
+        $j = gregorianToJalali($gy, $gm, $gd);
+        foreach ($cleanItems as $ci) {
+            if ($ci['product_id'] === '') continue;
+            foreach ($products as $pi => $p) {
+                if (($p['id'] ?? '') === $ci['product_id']) {
+                    $cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
+                    $new = $cur + $ci['quantity'];
+                    $products[$pi]['stock'] = $new;
+                    $moves[] = [
+                        'id' => createId(),
+                        'product_id' => $ci['product_id'],
+                        'product_name' => $ci['name'],
+                        'type' => 'return',
+                        'quantity' => $ci['quantity'],
+                        'resulting_stock' => $new,
+                        'note' => $note,
+                        'datetime' => $now->format('Y-m-d H:i:s'),
+                        'date' => $now->format('Y-m-d'),
+                        'jy' => $j[0],
+                        'jm' => $j[1],
+                        'jd' => $j[2],
+                        'jalali' => formatJalali($j[0], $j[1], $j[2])
+                    ];
+                    break;
+                }
+            }
+        }
+        $returnNumber = 'RET-' . str_pad(count($returns) + 1, 6, '0', STR_PAD_LEFT);
+        $returns[] = [
+            'id' => createId(),
+            'return_number' => $returnNumber,
+            'sale_id' => $saleId,
+            'invoice_number' => isset($sale['invoice_number']) ? (string)$sale['invoice_number'] : '',
+            'items' => $cleanItems,
+            'total' => $total,
+            'note' => $note,
+            'datetime' => $now->format('Y-m-d H:i:s'),
+            'date' => $now->format('Y-m-d'),
+            'jy' => $j[0],
+            'jm' => $j[1],
+            'jd' => $j[2],
+            'jalali' => formatJalali($j[0], $j[1], $j[2])
+        ];
+        if (!writeJsonFile($returnsFile, array_values($returns)) || !writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ثبت مرجوعی']);
+        }
+        jsonResponse(['ok' => true, 'return_number' => $returnNumber]);
+    }
+    if ($action === 'save_invoice') {
+        $items = $payload['items'] ?? [];
+        $discount = isset($payload['discount']) && is_numeric($payload['discount']) ? (float)$payload['discount'] : 0;
+        $discountType = trim((string)($payload['discount_type'] ?? 'amount'));
+        $invoiceId = trim((string)($payload['invoice_id'] ?? ''));
+        $invoiceNumber = trim((string)($payload['invoice_number'] ?? ''));
+        $customerName = trim((string)($payload['customer_name'] ?? ''));
+        $customerPhone = trim((string)($payload['customer_phone'] ?? ''));
+        $note = trim((string)($payload['note'] ?? ''));
+        if (!in_array($discountType, ['amount', 'percent'])) {
+            $discountType = 'amount';
+        }
+        if ($invoiceId === '') {
+            $invoiceId = generateInvoiceId();
+        }
+        if ($invoiceNumber === '') {
+            $invoiceNumber = generateInvoiceNumber($sales);
+        }
+        if ($discount < 0) $discount = 0;
+        if (!is_array($items)) {
+            jsonResponse(['ok' => false, 'error' => 'لیست فاکتور معتبر نیست']);
+        }
+        $cleanItems = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) continue;
+            $name = trim((string)($item['name'] ?? ''));
+            $category = trim((string)($item['category'] ?? ''));
+            $price = null;
+            if (isset($item['price']) && is_numeric($item['price'])) {
+                $price = (float)$item['price'];
+            }
+            $quantity = (int)($item['quantity'] ?? 0);
+            if ($name === '' || $price === null || $price < 0 || $quantity < 1) continue;
+            $cleanItems[] = [
+                'name' => $name,
+                'category' => $category,
+                'price' => $price,
+                'quantity' => $quantity,
+                'product_id' => isset($item['product_id']) ? (string)$item['product_id'] : ''
+            ];
+        }
+        if (!writeJsonFile($invoiceFile, [
+            'items' => $cleanItems,
+            'discount' => $discount,
+            'discount_type' => $discountType,
+            'invoice_id' => $invoiceId,
+            'invoice_number' => $invoiceNumber,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'note' => $note
+        ])) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ذخیره فاکتور']);
+        }
+        jsonResponse(['ok' => true, 'invoice_id' => $invoiceId, 'invoice_number' => $invoiceNumber]);
+    }
+    if ($action === 'record_sale') {
+        $items = $payload['items'] ?? [];
+        $discount = isset($payload['discount']) && is_numeric($payload['discount']) ? (float)$payload['discount'] : 0;
+        $discountType = trim((string)($payload['discount_type'] ?? 'amount'));
+        $invoiceId = trim((string)($payload['invoice_id'] ?? ''));
+        $invoiceNumber = trim((string)($payload['invoice_number'] ?? ''));
+        $customerName = trim((string)($payload['customer_name'] ?? ''));
+        $customerPhone = trim((string)($payload['customer_phone'] ?? ''));
+        $note = trim((string)($payload['note'] ?? ''));
+        if (!in_array($discountType, ['amount', 'percent'])) {
+            $discountType = 'amount';
+        }
+        if ($invoiceId === '') $invoiceId = generateInvoiceId();
+        if ($invoiceNumber === '') $invoiceNumber = generateInvoiceNumber($sales);
+        if ($discount < 0) $discount = 0;
+        if (!is_array($items)) {
+            jsonResponse(['ok' => false, 'error' => 'لیست فاکتور معتبر نیست']);
+        }
+        $cleanItems = [];
+        $subtotal = 0;
+        foreach ($items as $item) {
+            if (!is_array($item)) continue;
+            $name = trim((string)($item['name'] ?? ''));
+            $category = trim((string)($item['category'] ?? ''));
+            $price = null;
+            if (isset($item['price']) && is_numeric($item['price'])) {
+                $price = (float)$item['price'];
+            }
+            $quantity = (int)($item['quantity'] ?? 0);
+            if ($name === '' || $price === null || $price < 0 || $quantity < 1) continue;
+            $cleanItems[] = [
+                'name' => $name,
+                'category' => $category,
+                'price' => $price,
+                'quantity' => $quantity,
+                'product_id' => isset($item['product_id']) ? (string)$item['product_id'] : ''
+            ];
+            $subtotal += $price * $quantity;
+        }
+        if (!$cleanItems) {
+            jsonResponse(['ok' => false, 'error' => 'فاکتور خالی است']);
+        }
+        $discountAmount = 0;
+        if ($discountType === 'percent') {
+            if ($discount > 100) $discount = 100;
+            $discountAmount = $subtotal * $discount / 100;
+        } else {
+            if ($discount > $subtotal) $discount = $subtotal;
+            $discountAmount = $discount;
+        }
+        $vatRate = isset($settings['vat']) && is_numeric($settings['vat']) ? (float)$settings['vat'] : 0;
+        if ($vatRate < 0) $vatRate = 0;
+        $vatBase = $subtotal - $discountAmount;
+        $vatAmount = $vatBase * $vatRate / 100;
+        $total = $vatBase + $vatAmount;
+        $now = new DateTime();
+        $gy = (int)$now->format('Y');
+        $gm = (int)$now->format('n');
+        $gd = (int)$now->format('j');
+        $j = gregorianToJalali($gy, $gm, $gd);
+        foreach ($cleanItems as $ci) {
+            if (($ci['product_id'] ?? '') === '') continue;
+            foreach ($products as $pi => $p) {
+                if (($p['id'] ?? '') === $ci['product_id']) {
+                    $cur = isset($p['stock']) && is_numeric($p['stock']) ? (float)$p['stock'] : 0;
+                    $new = $cur - $ci['quantity'];
+                    $products[$pi]['stock'] = $new;
+                    $moves[] = [
+                        'id' => createId(),
+                        'product_id' => $ci['product_id'],
+                        'product_name' => $ci['name'],
+                        'type' => 'sale',
+                        'quantity' => -$ci['quantity'],
+                        'resulting_stock' => $new,
+                        'note' => $invoiceNumber,
+                        'datetime' => $now->format('Y-m-d H:i:s'),
+                        'date' => $now->format('Y-m-d'),
+                        'jy' => $j[0],
+                        'jm' => $j[1],
+                        'jd' => $j[2],
+                        'jalali' => formatJalali($j[0], $j[1], $j[2])
+                    ];
+                    break;
+                }
+            }
+        }
+        $sales[] = [
+            'id' => createId(),
+            'invoice_id' => $invoiceId,
+            'invoice_number' => $invoiceNumber,
+            'datetime' => $now->format('Y-m-d H:i:s'),
+            'date' => $now->format('Y-m-d'),
+            'jy' => $j[0],
+            'jm' => $j[1],
+            'jd' => $j[2],
+            'jalali' => formatJalali($j[0], $j[1], $j[2]),
+            'items' => $cleanItems,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'note' => $note,
+            'subtotal' => $subtotal,
+            'discount' => $discountAmount,
+            'discount_value' => $discount,
+            'discount_type' => $discountType,
+            'vat_rate' => $vatRate,
+            'vat' => $vatAmount,
+            'total' => $total
+        ];
+        if (!writeJsonFile($salesFile, array_values($sales)) || !writeJsonFile($productsFile, array_values($products)) || !writeJsonFile($movesFile, array_values($moves))) {
+            jsonResponse(['ok' => false, 'error' => 'خطا در ثبت فروش']);
+        }
+        jsonResponse(['ok' => true, 'invoice_id' => $invoiceId, 'invoice_number' => $invoiceNumber]);
+    }
+    if ($action === 'export_backup') {
+        jsonResponse([
+            'ok' => true,
+            'backup' => [
+                'settings' => $settings,
+                'categories' => $categories,
+                'products' => $products,
+                'sales' => $sales,
+                'returns' => $returns,
+                'exported_at' => date('Y-m-d H:i:s')
+            ]
+        ]);
+    }
+    if ($action === 'restore_backup') {
+        $backup = isset($payload['backup']) && is_array($payload['backup']) ? $payload['backup'] : null;
+        if ($backup === null) {
+            jsonResponse(['ok' => false, 'error' => 'فایل پشتیبان معتبر نیست']);
+        }
+        $restoreSettings = !empty($payload['restore_settings']);
+        $restoreCategories = !empty($payload['restore_categories']);
+        $restoreProducts = !empty($payload['restore_products']);
+        $restoreSales = !empty($payload['restore_sales']);
+        if (!$restoreSettings && !$restoreCategories && !$restoreProducts && !$restoreSales) {
+            jsonResponse(['ok' => false, 'error' => 'حداقل یک بخش را برای بازیابی انتخاب کنید']);
+        }
+        if ($restoreSettings) {
+            $bs = isset($backup['settings']) && is_array($backup['settings']) ? $backup['settings'] : null;
+            if ($bs === null) {
+                jsonResponse(['ok' => false, 'error' => 'بخش تنظیمات در فایل پشتیبان معتبر نیست']);
+            }
+            $allowedCurrencies = ['USD', 'EUR', 'OMR', 'IRT', 'IRR', 'CNY', 'RUB'];
+            $allowedLanguages = ['fa', 'en', 'fr', 'de', 'es', 'en_GB', 'zh', 'ru'];
+            $allowedCalendars = ['jalali', 'gregorian', 'both'];
+            $currency = trim((string)($bs['currency'] ?? 'IRT'));
+            $language = trim((string)($bs['language'] ?? 'fa'));
+            $calendar = trim((string)($bs['calendar'] ?? 'jalali'));
+            if (!in_array($currency, $allowedCurrencies)) $currency = 'IRT';
+            if (!in_array($language, $allowedLanguages)) $language = 'fa';
+            if (!in_array($calendar, $allowedCalendars)) $calendar = 'jalali';
+            $existingLocked = !empty($settings['currency_locked']);
+            if (!empty($settings['installed']) && $existingLocked) {
+                $currency = isset($settings['currency']) ? (string)$settings['currency'] : $currency;
+            }
+            $vat = isset($bs['vat']) && is_numeric($bs['vat']) ? (float)$bs['vat'] : 0;
+            if ($vat < 0) $vat = 0;
+            $theme = trim((string)($bs['theme'] ?? 'light'));
+            if (!in_array($theme, ['light', 'dark'])) $theme = 'light';
+            $newSettings = [
+                'name' => trim((string)($bs['name'] ?? '')),
+                'phone' => trim((string)($bs['phone'] ?? '')),
+                'address' => trim((string)($bs['address'] ?? '')),
+                'currency' => $currency,
+                'language' => $language,
+                'calendar' => $calendar,
+                'installed' => !empty($settings['installed']),
+                'currency_locked' => $existingLocked,
+                'vat' => $vat,
+                'theme' => $theme,
+                'print_message' => trim((string)($bs['print_message'] ?? '')),
+                'block_mobile' => !empty($bs['block_mobile'])
+            ];
+            if (!writeJsonFile($settingsFile, $newSettings)) {
+                jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی تنظیمات']);
+            }
+            $settings = $newSettings;
+        }
+        if ($restoreCategories) {
+            $bc = isset($backup['categories']) && is_array($backup['categories']) ? $backup['categories'] : null;
+            if ($bc === null) {
+                jsonResponse(['ok' => false, 'error' => 'بخش دسته‌بندی‌ها در فایل پشتیبان معتبر نیست']);
+            }
+            $cleanCategories = [];
+            foreach ($bc as $item) {
+                if (!is_array($item)) continue;
+                $name = trim((string)($item['name'] ?? ''));
+                if ($name === '') continue;
+                $cleanCategories[] = [
+                    'id' => isset($item['id']) && $item['id'] !== '' ? (string)$item['id'] : createId(),
+                    'name' => $name
+                ];
+            }
+            if (!writeJsonFile($categoriesFile, array_values($cleanCategories))) {
+                jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی دسته‌بندی‌ها']);
+            }
+        }
+        if ($restoreProducts) {
+            $bp = isset($backup['products']) && is_array($backup['products']) ? $backup['products'] : null;
+            if ($bp === null) {
+                jsonResponse(['ok' => false, 'error' => 'بخش محصولات در فایل پشتیبان معتبر نیست']);
+            }
+            $cleanProducts = [];
+            foreach ($bp as $item) {
+                if (!is_array($item)) continue;
+                $name = trim((string)($item['name'] ?? ''));
+                $category = trim((string)($item['category'] ?? ''));
+                $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : null;
+                if ($name === '' || $price === null || $price < 0) continue;
+                $cleanProducts[] = [
+                    'id' => isset($item['id']) && $item['id'] !== '' ? (string)$item['id'] : createId(),
+                    'name' => $name,
+                    'category' => $category,
+                    'price' => $price,
+                    'stock' => isset($item['stock']) && is_numeric($item['stock']) ? (float)$item['stock'] : 0,
+                    'stock_alert' => isset($item['stock_alert']) && is_numeric($item['stock_alert']) ? (float)$item['stock_alert'] : 0
+                ];
+            }
+            if (!writeJsonFile($productsFile, array_values($cleanProducts))) {
+                jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی محصولات']);
+            }
+        }
+        if ($restoreSales) {
+            $bsales = isset($backup['sales']) && is_array($backup['sales']) ? $backup['sales'] : null;
+            if ($bsales === null) {
+                jsonResponse(['ok' => false, 'error' => 'بخش تاریخچه فروش در فایل پشتیبان معتبر نیست']);
+            }
+            $cleanSales = [];
+            foreach ($bsales as $item) {
+                if (!is_array($item)) continue;
+                $cleanSales[] = $item;
+            }
+            if (!writeJsonFile($salesFile, array_values($cleanSales))) {
+                jsonResponse(['ok' => false, 'error' => 'خطا در بازیابی تاریخچه فروش']);
+            }
+        }
+        jsonResponse(['ok' => true]);
+    }
+    jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است']);
 }
 ?>
 <!DOCTYPE html>
@@ -1030,36 +1031,35 @@ jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است'])
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>پنل رسا</title>
+<title>پنل رسا | HST-MrPablo v3</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
 :root {
---bg: #f0fdfa;
---bg-gradient: linear-gradient(160deg, #f0fdfa 0%, #e6f7f4 60%, #d9f2ee 100%);
+--bg: #f5f3ff;
+--bg-gradient: linear-gradient(160deg, #f8f6ff 0%, #eef7ff 55%, #ecfeff 100%);
 --surface: #ffffff;
---surface-alt: #f7fefc;
---surface-hover: #ecfbf7;
---border: #d5e9e4;
---border-light: #e3f2ee;
---border-input: #b8d9d0;
---text: #0c3b33;
---text-secondary: #1d5c4f;
---text-muted: #5a8a7d;
---text-faint: #8fb3a8;
+--surface-alt: #faf9ff;
+--surface-hover: #f2eefe;
+--border: #e4def7;
+--border-light: #efeaf9;
+--border-input: #cfc4ee;
+--text: #17123a;
+--text-secondary: #3b3463;
+--text-muted: #6f6896;
+--text-faint: #9d96bd;
 --danger: #e11d48;
 --danger-bg: #fff1f2;
 --danger-border: #fecdd3;
 --success: #10b981;
 --success-soft: rgba(16, 185, 129, 0.12);
---primary: #0d9488;
---primary-soft: rgba(13, 148, 136, 0.10);
+--primary: #7c3aed;
+--primary-soft: rgba(124, 58, 237, 0.10);
 --primary-text: #ffffff;
 --accent: #06b6d4;
---shadow-sm: 0 1px 2px rgba(12, 59, 51, 0.06);
---shadow: 0 4px 12px rgba(12, 59, 51, 0.08);
---shadow-md: 0 8px 24px rgba(12, 59, 51, 0.10);
---shadow-lg: 0 16px 48px rgba(12, 59, 51, 0.12);
---shadow-island: 0 12px 40px rgba(12, 59, 51, 0.14), 0 2px 8px rgba(12, 59, 51, 0.08);
+--shadow-sm: 0 1px 2px rgba(46, 16, 101, 0.06);
+--shadow: 0 4px 12px rgba(46, 16, 101, 0.08);
+--shadow-md: 0 8px 24px rgba(46, 16, 101, 0.10);
+--shadow-lg: 0 16px 48px rgba(46, 16, 101, 0.12);
+--shadow-island: 0 12px 40px rgba(46, 16, 101, 0.14), 0 2px 8px rgba(46, 16, 101, 0.08);
 --radius-sm: 8px;
 --radius: 12px;
 --radius-lg: 16px;
@@ -1068,37 +1068,37 @@ jsonResponse(['ok' => false, 'error' => 'درخواست نامعتبر است'])
 --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 body.dark {
---bg: #04211d;
---bg-gradient: linear-gradient(160deg, #04211d 0%, #06302a 60%, #083b33 100%);
---surface: #0a2b26;
---surface-alt: #0e352f;
---surface-hover: #124038;
---border: #1c5148;
---border-light: #16443c;
---border-input: #2a6b60;
---text: #d7f2ec;
---text-secondary: #b0e0d6;
---text-muted: #7fb8aa;
---text-faint: #4f8172;
+--bg: #070312;
+--bg-gradient: linear-gradient(160deg, #070312 0%, #0c0a24 55%, #071a26 100%);
+--surface: #120e2a;
+--surface-alt: #191436;
+--surface-hover: #221b47;
+--border: #2e2660;
+--border-light: #262052;
+--border-input: #453a80;
+--text: #ece9ff;
+--text-secondary: #cfc9f2;
+--text-muted: #9a92c9;
+--text-faint: #6b6394;
 --danger: #fb7185;
 --danger-bg: #331a22;
 --danger-border: #5b2333;
 --success: #34d399;
---success-soft: rgba(52, 211, 153, 0.12);
---primary: #2dd4bf;
---primary-soft: rgba(45, 212, 191, 0.14);
---primary-text: #04211d;
+--success-soft: rgba(52, 211, 153, 0.14);
+--primary: #a78bfa;
+--primary-soft: rgba(167, 139, 250, 0.16);
+--primary-text: #14092e;
 --accent: #22d3ee;
---shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
---shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
---shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
---shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
---shadow-island: 0 12px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+--shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+--shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+--shadow-island: 0 12px 40px rgba(124, 58, 237, 0.25), 0 2px 8px rgba(0, 0, 0, 0.45);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
-font-family: 'Vazirmatn', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+font-family: 'Vazirmatn', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 background: var(--bg-gradient);
 color: var(--text);
 min-height: 100vh;
@@ -1109,16 +1109,20 @@ overflow-x: hidden;
 }
 body.menu-open { overflow: hidden; }
 .bg-orbs { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.bg-orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.22; animation: floatOrb 22s ease-in-out infinite; }
-.bg-orb-1 { width: 420px; height: 420px; background: var(--primary); top: -120px; right: -120px; }
-.bg-orb-2 { width: 360px; height: 360px; background: var(--accent); bottom: -100px; left: -100px; animation-delay: -7s; }
-.bg-orb-3 { width: 300px; height: 300px; background: var(--success); top: 42%; left: 32%; opacity: 0.13; animation-delay: -14s; }
-body.dark .bg-orb { opacity: 0.14; }
-body.dark .bg-orb-3 { opacity: 0.09; }
+.bg-orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.26; animation: floatOrb 22s ease-in-out infinite; }
+.bg-orb-1 { width: 440px; height: 440px; background: var(--primary); top: -120px; right: -120px; }
+.bg-orb-2 { width: 380px; height: 380px; background: var(--accent); bottom: -110px; left: -110px; animation-delay: -7s; }
+.bg-orb-3 { width: 320px; height: 320px; background: var(--success); top: 42%; left: 32%; opacity: 0.14; animation-delay: -14s; }
+body.dark .bg-orb { opacity: 0.20; }
+body.dark .bg-orb-3 { opacity: 0.10; }
 @keyframes floatOrb {
 0%, 100% { transform: translate(0,0) scale(1); }
 33% { transform: translate(42px,-38px) scale(1.08); }
 66% { transform: translate(-30px,30px) scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+.bg-orb { animation: none; }
+.header h1 { animation: none; }
 }
 .hamburger-fab {
 position: fixed;
@@ -1139,6 +1143,7 @@ transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .hamburger-fab:hover { transform: scale(1.05); }
 .hamburger-fab:active { transform: scale(0.96); }
+body.dark .hamburger-fab { box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.25), 0 8px 32px rgba(124, 58, 237, 0.45); }
 .hb-line {
 position: absolute;
 left: 50%;
@@ -1159,8 +1164,9 @@ transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 position: fixed;
 inset: 0;
 z-index: 1200;
-background: rgba(4, 33, 29, 0.45);
-backdrop-filter: blur(2px);
+background: rgba(7, 3, 18, 0.55);
+backdrop-filter: blur(3px);
+-webkit-backdrop-filter: blur(3px);
 opacity: 0;
 visibility: hidden;
 pointer-events: none;
@@ -1201,7 +1207,9 @@ background: linear-gradient(135deg, var(--primary), var(--accent));
 -webkit-background-clip: text;
 background-clip: text;
 color: transparent;
+display: block;
 }
+.drawer-version { font-size: 10px; font-weight: 700; color: var(--text-faint); margin-top: 2px; letter-spacing: 0.03em; }
 .drawer-close {
 width: 36px;
 height: 36px;
@@ -1214,6 +1222,7 @@ display: flex;
 align-items: center;
 justify-content: center;
 transition: var(--transition);
+flex-shrink: 0;
 }
 .drawer-close:hover { border-color: var(--danger); color: var(--danger); }
 .drawer-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
@@ -1296,6 +1305,7 @@ justify-content: center;
 .block-icon svg { width: 36px; height: 36px; }
 .block-card h2 { font-size: 20px; margin-bottom: 10px; color: var(--text); }
 .block-card p { color: var(--text-muted); font-size: 15px; line-height: 1.9; }
+.block-brand { margin-top: 18px; font-size: 11px; font-weight: 800; color: var(--text-faint); letter-spacing: 0.05em; }
 body.blocked .hamburger-fab,
 body.blocked .mobile-drawer,
 body.blocked .mobile-backdrop,
@@ -1322,8 +1332,8 @@ overflow-x: auto;
 scrollbar-width: none;
 }
 body.dark .island-nav {
-background: rgba(10, 43, 38, 0.78);
-border-color: rgba(45, 212, 191, 0.15);
+background: rgba(18, 14, 42, 0.78);
+border-color: rgba(167, 139, 250, 0.18);
 }
 .island-nav::-webkit-scrollbar { display: none; }
 .island-nav .nav-item {
@@ -1351,6 +1361,7 @@ background: linear-gradient(135deg, var(--primary), var(--accent));
 font-weight: 600;
 box-shadow: var(--shadow-sm);
 }
+body.dark .island-nav .nav-item.active { box-shadow: 0 0 18px rgba(167, 139, 250, 0.35); }
 .island-nav .nav-item .icon { width: 16px; height: 16px; flex-shrink: 0; }
 .island-nav .theme-btn {
 width: 36px; height: 36px; padding: 0;
@@ -1379,8 +1390,8 @@ overflow-y: auto;
 scrollbar-width: none;
 }
 body.dark .side-island {
-background: rgba(10, 43, 38, 0.8);
-border-color: rgba(45, 212, 191, 0.15);
+background: rgba(18, 14, 42, 0.8);
+border-color: rgba(167, 139, 250, 0.18);
 }
 .side-island::-webkit-scrollbar { display: none; }
 .side-island-title {
@@ -1417,6 +1428,7 @@ background: linear-gradient(135deg, var(--primary), var(--accent));
 font-weight: 700;
 box-shadow: var(--shadow-sm);
 }
+body.dark .side-item.active { box-shadow: 0 0 18px rgba(167, 139, 250, 0.35); }
 body.app-active .container { max-width: 1100px; }
 @media (min-width: 769px) and (max-width: 1319px) {
 body.app-active .container { max-width: calc(100vw - 220px); }
@@ -1427,13 +1439,17 @@ body.app-active .container { max-width: calc(100vw - 220px); }
 font-size: 32px;
 font-weight: 800;
 letter-spacing: -0.02em;
-background: linear-gradient(135deg, var(--primary), var(--accent));
+background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+background-size: 200% auto;
+animation: shine 6s linear infinite;
 -webkit-background-clip: text;
 background-clip: text;
 color: transparent;
 margin-bottom: 8px;
 }
-.header .subtitle { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+body.dark .header h1 { filter: drop-shadow(0 0 14px rgba(167, 139, 250, 0.35)); }
+@keyframes shine { to { background-position: 200% center; } }
+.header .subtitle { color: var(--text-muted); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
 .live-clock {
 margin-top: 16px;
 display: inline-flex;
@@ -1710,7 +1726,6 @@ flex-shrink: 0;
 font-size: 12px;
 font-weight: 600;
 color: var(--text-muted);
-text-transform: uppercase;
 letter-spacing: 0.03em;
 margin-bottom: 4px;
 }
@@ -1720,6 +1735,25 @@ font-weight: 800;
 color: var(--text);
 letter-spacing: -0.02em;
 }
+.top-item { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px dashed var(--border); }
+.top-item:last-child { border-bottom: none; }
+.top-rank {
+width: 28px; height: 28px;
+border-radius: 50%;
+background: linear-gradient(135deg, var(--primary), var(--accent));
+color: var(--primary-text);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 12px;
+font-weight: 800;
+flex-shrink: 0;
+}
+.top-info { flex: 1; min-width: 0; }
+.top-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.top-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.top-track { height: 6px; background: var(--surface-hover); border-radius: 99px; margin-top: 6px; overflow: hidden; }
+.top-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 99px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 .bar-chart {
 display: flex;
 gap: 8px;
@@ -1835,7 +1869,6 @@ font-weight: 600;
 color: var(--text-muted);
 padding: 8px 0;
 text-align: center;
-text-transform: uppercase;
 }
 .calendar-day {
 aspect-ratio: 1;
@@ -2052,7 +2085,7 @@ max-width: 92vw;
 @page { size: A4; margin: 0; }
 @media print {
 body { background: #fff; padding: 0; color: #000; }
-#app, #installer, .island-nav, .side-island, #toastWrap, .bg-orbs, .hamburger-fab, .mobile-drawer, .mobile-backdrop { display: none !important; }
+#app, #installer, .island-nav, .side-island, #toastWrap, .bg-orbs, .hamburger-fab, .mobile-drawer, .mobile-backdrop, #mobileBlockScreen { display: none !important; }
 .container { padding: 0; max-width: 100% !important; }
 #printArea { display: block !important; padding: 12mm; color: #000; }
 .print-brand { height: 6px; background: #000; margin-bottom: 16px; }
@@ -2064,14 +2097,6 @@ margin-bottom: 16px;
 }
 .print-header h1 { font-size: 24px; margin-bottom: 7px; }
 .print-header p { margin: 4px 0; font-size: 13px; }
-.print-customer {
-margin: 10px 0;
-border: 1px solid #000;
-padding: 10px;
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 6px;
-}
 .print-title { text-align: center; font-size: 18px; margin: 10px 0; font-weight: 800; }
 .print-subtitle { text-align: center; font-size: 14px; margin-bottom: 12px; font-weight: 700; }
 .print-note { margin-top: 14px; border: 1px dashed #000; padding: 10px; font-size: 13px; }
@@ -2167,6 +2192,14 @@ body.app-active .container { max-width: 1100px; }
 .invoice-history-details { flex-direction: column; align-items: flex-start; }
 .invoice-history-actions { width: 100%; }
 .invoice-history-actions .btn { flex: 1; justify-content: center; }
+.bg-orb { filter: blur(70px); }
+.bg-orb-1 { width: 300px; height: 300px; }
+.bg-orb-2 { width: 260px; height: 260px; }
+.bg-orb-3 { display: none; }
+}
+@media (max-width: 480px) {
+.invoice-table { font-size: 11px; }
+.invoice-table th, .invoice-table td { padding: 8px 6px; }
 }
 </style>
 </head>
@@ -2184,7 +2217,10 @@ body.app-active .container { max-width: 1100px; }
 <div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()"></div>
 <nav class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
 <div class="drawer-header">
+<div>
 <strong data-i18n="appName">پنل رسا</strong>
+<div class="drawer-version">HST-MrPablo · v3</div>
+</div>
 <button class="drawer-close" onclick="closeMobileMenu()" aria-label="Close">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 </button>
@@ -2247,7 +2283,8 @@ body.app-active .container { max-width: 1100px; }
 </div>
 <h2 data-i18n="blockTitle">ورود با این دستگاه مجاز نیست</h2>
 <p data-i18n="blockMessage">لطفاً با دسکتاپ وارد شوید</p>
-<p class="muted" data-i18n="blockHint" style="margin-top:8px;"></p>
+<p class="muted" data-i18n="blockHint"></p>
+<div class="block-brand">HST-MrPablo · v3</div>
 </div>
 </div>
 <nav class="island-nav" id="islandNav" style="display: none;">
@@ -2302,7 +2339,7 @@ body.app-active .container { max-width: 1100px; }
 <div class="card">
 <div class="header" style="padding: 0 0 24px 0; margin-bottom: 0;">
 <h1 data-i18n="installerTitle">نصب پنل رسا</h1>
-<div class="subtitle" data-i18n="installerSubtitle">تنظیمات اولیه را انتخاب کنید</div>
+<div class="subtitle">HST-MrPablo — v3</div>
 </div>
 <div class="form-group">
 <label data-i18n="currencyLabel">واحد پول</label>
@@ -2325,7 +2362,7 @@ body.app-active .container { max-width: 1100px; }
 <div id="app" class="container" style="display: none;">
 <div class="header">
 <h1 data-i18n="appName">پنل رسا</h1>
-<div class="subtitle" data-i18n="subtitle">طراحان</div>
+<div class="subtitle" data-i18n="subtitle">HST-MrPablo — نسخه ۳</div>
 <div class="live-clock" id="liveClock" style="display: none;">
 <span class="clock-time" id="clockTime">--:--:--</span>
 <span class="clock-date" id="clockDate"></span>
@@ -2374,7 +2411,7 @@ body.app-active .container { max-width: 1100px; }
 </label>
 <span data-i18n="blockMobileLabel">مسدود کردن حالت موبایل</span>
 </div>
-<div class="muted" data-i18n="blockMobileHint" style="margin:-8px 0 16px;"></div>
+<div class="muted" data-i18n="blockMobileHint" style="margin-top:-8px; margin-bottom:16px;"></div>
 <div class="actions">
 <button class="btn" onclick="saveSettings()">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -2484,6 +2521,7 @@ body.app-active .container { max-width: 1100px; }
 <div id="wtab-inventory" class="wtab active">
 <div class="card">
 <div class="card-title" data-i18n="warehouseTitle">مدیریت انبار و موجودی</div>
+<div class="stats" id="inventoryStats"></div>
 <div id="lowStockBox"></div>
 <div id="inventoryTable"></div>
 </div>
@@ -2699,6 +2737,10 @@ body.app-active .container { max-width: 1100px; }
 <div class="bar-chart" id="weekChart"></div>
 </div>
 <div class="card">
+<div class="card-title" data-i18n="topProductsTitle">پرفروش‌ترین محصولات</div>
+<div id="topProductsList"></div>
+</div>
+<div class="card">
 <div class="report-toolbar">
 <div class="report-filters">
 <div class="form-group">
@@ -2807,7 +2849,8 @@ let currentTab = 'settings';
 let currentReport = { type: 'month', label: '', filtered: [], subtotal: 0, discount: 0, vat: 0, total: 0 };
 const languageTimezones = {
 fa: 'Asia/Tehran', en: 'America/New_York', en_GB: 'Europe/London',
-fr: 'Europe/Paris', de: 'Europe/Berlin', es: 'Europe/Madrid'
+fr: 'Europe/Paris', de: 'Europe/Berlin', es: 'Europe/Madrid',
+zh: 'Asia/Shanghai', ru: 'Europe/Moscow'
 };
 const jalaliMonthNames = [
 'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
@@ -2819,9 +2862,11 @@ en: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr'
 fr: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'],
 de: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'],
 es: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'],
-en_GB: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand']
+en_GB: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'],
+zh: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+ru: ['Фарвардин', 'Ордибехешт', 'Хордад', 'Тир', 'Мордад', 'Шахривар', 'Мехр', 'Абан', 'Азар', 'Дей', 'Бахман', 'Эсфанд']
 };
-const languageLocales = { fa: 'fa-IR', en: 'en-US', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', en_GB: 'en-GB' };
+const languageLocales = { fa: 'fa-IR', en: 'en-US', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', en_GB: 'en-GB', zh: 'zh-CN', ru: 'ru-RU' };
 const flagUS = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#fff"/><rect y="0" width="60" height="6" fill="#b22234"/><rect y="12" width="60" height="6" fill="#b22234"/><rect y="24" width="60" height="6" fill="#b22234"/><rect y="36" width="60" height="4" fill="#b22234"/><rect width="26" height="22" fill="#3c3b6e"/></svg>';
 const flagEU = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#003399"/><circle cx="30" cy="20" r="10" fill="none" stroke="#ffcc00" stroke-width="3"/></svg>';
 const flagOM = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#fff"/><rect width="18" height="40" fill="#c8102e"/><rect y="0" width="60" height="13" fill="#007a3d"/><rect y="27" width="60" height="13" fill="#c8102e"/></svg>';
@@ -2830,19 +2875,23 @@ const flagFR = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2
 const flagDE = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="13" fill="#000"/><rect y="13" width="60" height="13" fill="#dd0000"/><rect y="26" width="60" height="14" fill="#ffce00"/></svg>';
 const flagES = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#aa151b"/><rect y="10" width="60" height="20" fill="#f1bf00"/></svg>';
 const flagGB = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#c8102e" stroke-width="4"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="12"/><path d="M30 0V40M0 20H60" stroke="#c8102e" stroke-width="6"/></svg>';
+const flagCN = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#de2910"/><path d="M10 4l1.8 5.5H17.5l-4.6 3.4 1.7 5.4L10 15.2 5.4 18.3l1.7-5.4L2.5 9.5h5.7z" fill="#ffde00"/><circle cx="24" cy="5" r="1.6" fill="#ffde00"/><circle cx="28" cy="10" r="1.6" fill="#ffde00"/><circle cx="28" cy="16" r="1.6" fill="#ffde00"/><circle cx="24" cy="21" r="1.6" fill="#ffde00"/></svg>';
+const flagRU = '<svg class="flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="13.3" fill="#ffffff"/><rect y="13.3" width="60" height="13.4" fill="#0039a6"/><rect y="26.7" width="60" height="13.3" fill="#d52b1e"/></svg>';
 const currencyDefinitions = [
 { id: 'USD', flag: flagUS }, { id: 'EUR', flag: flagEU }, { id: 'OMR', flag: flagOM },
-{ id: 'IRT', flag: flagIR }, { id: 'IRR', flag: flagIR }
+{ id: 'IRT', flag: flagIR }, { id: 'IRR', flag: flagIR }, { id: 'CNY', flag: flagCN },
+{ id: 'RUB', flag: flagRU }
 ];
 const languageDefinitions = [
 { id: 'fa', flag: flagIR }, { id: 'en', flag: flagUS }, { id: 'fr', flag: flagFR },
-{ id: 'de', flag: flagDE }, { id: 'es', flag: flagES }, { id: 'en_GB', flag: flagGB }
+{ id: 'de', flag: flagDE }, { id: 'es', flag: flagES }, { id: 'en_GB', flag: flagGB },
+{ id: 'zh', flag: flagCN }, { id: 'ru', flag: flagRU }
 ];
 const calendarDefinitions = [{ id: 'jalali' }, { id: 'gregorian' }, { id: 'both' }];
 const translations = {
 fa: {
 appName: 'پنل رسا',
-subtitle: 'Mrpablo - HST Dev - 2.4',
+subtitle: 'HST-MrPablo — نسخه ۳',
 tabSettings: 'تنظیمات', tabCategories: 'دسته‌بندی', tabProducts: 'محصولات',
 tabWarehouse: 'انبار', tabInvoice: 'فاکتور', tabHistory: 'تاریخچه', tabCalendar: 'تقویم',
 whMenuStock: 'موجودی انبار', whMenuReturn: 'ثبت مرجوعی', whMenuReturns: 'مرجوعی‌ها', whMenuMoves: 'تراکنش‌ها',
@@ -2859,6 +2908,10 @@ blockDisabledMsg: 'مسدودسازی غیرفعال شد',
 themeToggleLabel: 'تغییر تم',
 productSearchPlaceholder: 'جستجوی محصول...',
 noProductFound: 'محصولی یافت نشد',
+topProductsTitle: 'پرفروش‌ترین محصولات',
+inventoryValueTitle: 'ارزش کل انبار',
+totalStockTitle: 'جمع موجودی (واحد)',
+lowStockItemsTitle: 'کالاهای کم‌موجود',
 settingsTitle: 'اطلاعات فروشگاه', storeNameLabel: 'نام فروشگاه', phoneLabel: 'شماره تماس',
 addressLabel: 'آدرس', saveSettings: 'ذخیره تنظیمات', exportBackup: 'دانلود پشتیبان',
 restoreTitle: 'بازیابی پشتیبان', restoreSettings: 'تنظیمات فروشگاه',
@@ -2934,16 +2987,18 @@ confirmDeleteCategory: 'این دسته‌بندی حذف شود؟', confirmDele
 confirmNewInvoice: 'فاکتور جدید شروع شود؟', confirmRecordSale: 'فاکتور ثبت شود؟',
 error: 'خطا', salesWord: 'فروش', invoiceHistoryTitle: 'تاریخچه فاکتورها',
 searchPlaceholder: 'جستجو با شماره یا آیدی فاکتور...', noInvoiceFound: 'فاکتوری یافت نشد',
-printSale: 'چاپ', storeSignLabel: 'مهر و امضای فروشگاه', panelFooter: 'پنل مدیریت فروش رسا',
+printSale: 'چاپ', storeSignLabel: 'مهر و امضای فروشگاه', panelFooter: 'پنل مدیریت فروش رسا | HST-MrPablo v3',
 dateTimeLabel: 'تاریخ و ساعت',
 calendar_jalali: 'تقویم شمسی', calendar_gregorian: 'تقویم میلادی', calendar_both: 'هر دو تقویم',
 currency_USD: 'دلار', currency_EUR: 'یورو', currency_OMR: 'ریال عمان', currency_IRT: 'تومان', currency_IRR: 'ریال',
+currency_CNY: 'یوان چین', currency_RUB: 'روبل روسیه',
 language_fa: 'فارسی', language_en: 'انگلیسی', language_fr: 'فرانسوی',
-language_de: 'آلمانی', language_es: 'اسپانیایی', language_en_gb: 'انگلیسی (UK)'
+language_de: 'آلمانی', language_es: 'اسپانیایی', language_en_gb: 'انگلیسی (UK)',
+language_zh: 'چینی', language_ru: 'روسی'
 },
 en: {
 appName: 'Panel Rasa',
-subtitle: 'Version 2.5 - Designer & Developer: Mr. Pablo',
+subtitle: 'HST-MrPablo — Version 3',
 tabSettings: 'Settings', tabCategories: 'Categories', tabProducts: 'Products',
 tabWarehouse: 'Warehouse', tabInvoice: 'Invoice', tabHistory: 'History', tabCalendar: 'Calendar',
 whMenuStock: 'Stock', whMenuReturn: 'New return', whMenuReturns: 'Returns', whMenuMoves: 'Movements',
@@ -2960,6 +3015,10 @@ blockDisabledMsg: 'Block disabled',
 themeToggleLabel: 'Toggle theme',
 productSearchPlaceholder: 'Search products...',
 noProductFound: 'No product found',
+topProductsTitle: 'Top selling products',
+inventoryValueTitle: 'Inventory value',
+totalStockTitle: 'Total stock units',
+lowStockItemsTitle: 'Low stock items',
 settingsTitle: 'Store Information', storeNameLabel: 'Store name', phoneLabel: 'Phone number',
 addressLabel: 'Address', saveSettings: 'Save settings', exportBackup: 'Download backup',
 restoreTitle: 'Restore Backup', restoreSettings: 'Store settings',
@@ -3035,16 +3094,18 @@ confirmDeleteCategory: 'Delete this category?', confirmDeleteProduct: 'Delete th
 confirmNewInvoice: 'Start a new invoice?', confirmRecordSale: 'Record this sale?',
 error: 'Error', salesWord: 'sales', invoiceHistoryTitle: 'Invoice History',
 searchPlaceholder: 'Search by invoice number or ID...', noInvoiceFound: 'No invoice found',
-printSale: 'Print', storeSignLabel: 'Store stamp & signature', panelFooter: 'Rasa Sales Management Panel',
+printSale: 'Print', storeSignLabel: 'Store stamp & signature', panelFooter: 'Rasa Sales Management Panel | HST-MrPablo v3',
 dateTimeLabel: 'Date & time',
 calendar_jalali: 'Jalali calendar', calendar_gregorian: 'Gregorian calendar', calendar_both: 'Both calendars',
 currency_USD: 'US Dollar', currency_EUR: 'Euro', currency_OMR: 'Omani Rial', currency_IRT: 'Iran Toman', currency_IRR: 'Iran Rial',
+currency_CNY: 'Chinese Yuan', currency_RUB: 'Russian Ruble',
 language_fa: 'Persian', language_en: 'English', language_fr: 'French',
-language_de: 'German', language_es: 'Spanish', language_en_gb: 'English (UK)'
+language_de: 'German', language_es: 'Spanish', language_en_gb: 'English (UK)',
+language_zh: 'Chinese', language_ru: 'Russian'
 },
 fr: {
 appName: 'Panel Rasa',
-subtitle: 'Version 2.5 - Concepteur et développeur : M. Pablo',
+subtitle: 'HST-MrPablo — Version 3',
 tabSettings: 'Paramètres', tabCategories: 'Catégories', tabProducts: 'Produits',
 tabWarehouse: 'Entrepôt', tabInvoice: 'Facture', tabHistory: 'Historique', tabCalendar: 'Calendrier',
 whMenuStock: 'Stock', whMenuReturn: 'Retour', whMenuReturns: 'Retours', whMenuMoves: 'Mouvements',
@@ -3061,6 +3122,10 @@ blockDisabledMsg: 'Blocage désactivé',
 themeToggleLabel: 'Changer de thème',
 productSearchPlaceholder: 'Rechercher des produits...',
 noProductFound: 'Aucun produit trouvé',
+topProductsTitle: 'Meilleures ventes',
+inventoryValueTitle: 'Valeur du stock',
+totalStockTitle: 'Unités en stock',
+lowStockItemsTitle: 'Stock faible',
 settingsTitle: 'Informations de la boutique', storeNameLabel: 'Nom de la boutique', phoneLabel: 'Numéro de téléphone',
 addressLabel: 'Adresse', saveSettings: 'Enregistrer', exportBackup: 'Télécharger sauvegarde',
 restoreTitle: 'Restaurer la sauvegarde', restoreSettings: 'Paramètres de la boutique',
@@ -3130,16 +3195,18 @@ confirmDeleteCategory: 'Supprimer?', confirmDeleteProduct: 'Supprimer?',
 confirmNewInvoice: 'Nouveau?', confirmRecordSale: 'Enregistrer?',
 error: 'Erreur', salesWord: 'ventes', invoiceHistoryTitle: 'Historique des factures',
 searchPlaceholder: 'Rechercher par numéro...', noInvoiceFound: 'Aucune facture trouvée',
-printSale: 'Imprimer', storeSignLabel: 'Cachet et signature du magasin', panelFooter: 'Panneau de gestion des ventes Rasa',
+printSale: 'Imprimer', storeSignLabel: 'Cachet et signature du magasin', panelFooter: 'Panneau de gestion des ventes Rasa | HST-MrPablo v3',
 dateTimeLabel: 'Date',
 calendar_jalali: 'Solaire', calendar_gregorian: 'Grégorien', calendar_both: 'Les deux',
 currency_USD: 'Dollar', currency_EUR: 'Euro', currency_OMR: 'Rial omanais', currency_IRT: 'Toman', currency_IRR: 'Rial',
+currency_CNY: 'Yuan chinois', currency_RUB: 'Rouble russe',
 language_fa: 'Persan', language_en: 'Anglais', language_fr: 'Français',
-language_de: 'Allemand', language_es: 'Espagnol', language_en_gb: 'Anglais (UK)'
+language_de: 'Allemand', language_es: 'Espagnol', language_en_gb: 'Anglais (UK)',
+language_zh: 'Chinois', language_ru: 'Russe'
 },
 de: {
 appName: 'Panel Rasa',
-subtitle: 'Version 2.5 - Designer & Entwickler: Herr Pablo',
+subtitle: 'HST-MrPablo — Version 3',
 tabSettings: 'Einstellungen', tabCategories: 'Kategorien', tabProducts: 'Produkte',
 tabWarehouse: 'Lager', tabInvoice: 'Rechnung', tabHistory: 'Verlauf', tabCalendar: 'Kalender',
 whMenuStock: 'Bestand', whMenuReturn: 'Rückgabe', whMenuReturns: 'Rückgaben', whMenuMoves: 'Bewegungen',
@@ -3156,6 +3223,10 @@ blockDisabledMsg: 'Sperre deaktiviert',
 themeToggleLabel: 'Design wechseln',
 productSearchPlaceholder: 'Produkte suchen...',
 noProductFound: 'Kein Produkt gefunden',
+topProductsTitle: 'Topseller',
+inventoryValueTitle: 'Lagerwert',
+totalStockTitle: 'Bestandseinheiten',
+lowStockItemsTitle: 'Niedriger Bestand',
 settingsTitle: 'Shopinformationen', storeNameLabel: 'Shopname', phoneLabel: 'Telefonnummer',
 addressLabel: 'Adresse', saveSettings: 'Speichern', exportBackup: 'Backup',
 restoreTitle: 'Backup wiederherstellen', restoreSettings: 'Shop-Einstellungen',
@@ -3216,16 +3287,18 @@ chooseOrManual: 'Auswählen.', invoiceEmpty: 'Leer.', saleRecorded: 'Erfasst.', 
 confirmDeleteCategory: 'Löschen?', confirmDeleteProduct: 'Löschen?', confirmNewInvoice: 'Neu?', confirmRecordSale: 'Buchen?',
 error: 'Fehler', salesWord: 'Verkäufe', invoiceHistoryTitle: 'Rechnungshistorie',
 searchPlaceholder: 'Suchen...', noInvoiceFound: 'Nicht gefunden',
-printSale: 'Drucken', storeSignLabel: 'Stempel & Unterschrift des Shops', panelFooter: 'Rasa Verkaufsverwaltungs-Panel',
+printSale: 'Drucken', storeSignLabel: 'Stempel & Unterschrift des Shops', panelFooter: 'Rasa Verkaufsverwaltungs-Panel | HST-MrPablo v3',
 dateTimeLabel: 'Datum',
 calendar_jalali: 'Jalali', calendar_gregorian: 'Gregorianisch', calendar_both: 'Beide',
 currency_USD: 'Dollar', currency_EUR: 'Euro', currency_OMR: 'Rial', currency_IRT: 'Toman', currency_IRR: 'Rial',
+currency_CNY: 'Chinesischer Yuan', currency_RUB: 'Russischer Rubel',
 language_fa: 'Persisch', language_en: 'Englisch', language_fr: 'Französisch',
-language_de: 'Deutsch', language_es: 'Spanisch', language_en_gb: 'Englisch (UK)'
+language_de: 'Deutsch', language_es: 'Spanisch', language_en_gb: 'Englisch (UK)',
+language_zh: 'Chinesisch', language_ru: 'Russisch'
 },
 es: {
 appName: 'Panel Rasa',
-subtitle: 'Versión 2.5 - Diseñador: Sr. Pablo',
+subtitle: 'HST-MrPablo — Versión 3',
 tabSettings: 'Ajustes', tabCategories: 'Categorías', tabProducts: 'Productos',
 tabWarehouse: 'Almacén', tabInvoice: 'Factura', tabHistory: 'Historial', tabCalendar: 'Calendario',
 whMenuStock: 'Stock', whMenuReturn: 'Devolución', whMenuReturns: 'Devoluciones', whMenuMoves: 'Movimientos',
@@ -3242,6 +3315,10 @@ blockDisabledMsg: 'Bloqueo desactivado',
 themeToggleLabel: 'Cambiar tema',
 productSearchPlaceholder: 'Buscar productos...',
 noProductFound: 'No se encontró producto',
+topProductsTitle: 'Más vendidos',
+inventoryValueTitle: 'Valor del inventario',
+totalStockTitle: 'Unidades en stock',
+lowStockItemsTitle: 'Stock bajo',
 settingsTitle: 'Información', storeNameLabel: 'Nombre', phoneLabel: 'Teléfono', addressLabel: 'Dirección',
 saveSettings: 'Guardar', exportBackup: 'Descargar',
 restoreTitle: 'Restaurar copia', restoreSettings: 'Ajustes de la tienda',
@@ -3292,11 +3369,223 @@ invoiceEmpty: 'Vacío.', saleRecorded: 'Registrado.', invoiceSaved: 'Guardado.',
 confirmDeleteCategory: '¿Eliminar?', confirmDeleteProduct: '¿Eliminar?', confirmNewInvoice: '¿Nuevo?', confirmRecordSale: '¿Registrar?',
 error: 'Error', salesWord: 'ventas', invoiceHistoryTitle: 'Historial de facturas',
 searchPlaceholder: 'Buscar...', noInvoiceFound: 'No encontrado',
-printSale: 'Imprimir', storeSignLabel: 'Sello y firma de la tienda', panelFooter: 'Panel de gestión de ventas Rasa',
+printSale: 'Imprimir', storeSignLabel: 'Sello y firma de la tienda', panelFooter: 'Panel de gestión de ventas Rasa | HST-MrPablo v3',
 dateTimeLabel: 'Fecha',
 calendar_jalali: 'Solar', calendar_gregorian: 'Gregoriano', calendar_both: 'Ambos',
 currency_USD: 'Dólar', currency_EUR: 'Euro', currency_OMR: 'Rial', currency_IRT: 'Toman', currency_IRR: 'Rial',
-language_fa: 'Persa', language_en: 'Inglés', language_fr: 'Francés', language_de: 'Alemán', language_es: 'Español', language_en_gb: 'Inglés (RU)'
+currency_CNY: 'Yuan chino', currency_RUB: 'Rublo ruso',
+language_fa: 'Persa', language_en: 'Inglés', language_fr: 'Francés', language_de: 'Alemán', language_es: 'Español', language_en_gb: 'Inglés (RU)',
+language_zh: 'Chino', language_ru: 'Ruso'
+},
+zh: {
+appName: 'Rasa 面板',
+subtitle: 'HST-MrPablo — 版本 3',
+tabSettings: '设置', tabCategories: '分类', tabProducts: '产品',
+tabWarehouse: '仓库', tabInvoice: '发票', tabHistory: '历史', tabCalendar: '日历',
+whMenuStock: '库存', whMenuReturn: '退货登记', whMenuReturns: '退货记录', whMenuMoves: '出入库流水',
+deviceInfoTitle: '设备信息',
+deviceLabel: '设备类型', osLabel: '操作系统', browserLabel: '浏览器', screenLabel: '屏幕分辨率',
+device_mobile: '手机', device_tablet: '平板', device_desktop: '桌面',
+blockMobileLabel: '禁用移动端',
+blockMobileHint: '开启后，手机和平板用户将看到"请使用桌面设备访问"。此设置仅可在桌面端更改。',
+blockTitle: '此设备不允许访问',
+blockMessage: '请使用桌面设备访问',
+blockHint: '管理员已禁用移动端访问。',
+blockEnabledMsg: '已禁用移动端',
+blockDisabledMsg: '已取消禁用',
+themeToggleLabel: '切换主题',
+productSearchPlaceholder: '搜索产品...',
+noProductFound: '未找到产品',
+topProductsTitle: '最畅销产品',
+inventoryValueTitle: '库存总价值',
+totalStockTitle: '库存总量（件）',
+lowStockItemsTitle: '低库存商品',
+settingsTitle: '商店信息', storeNameLabel: '商店名称', phoneLabel: '联系电话',
+addressLabel: '地址', saveSettings: '保存设置', exportBackup: '下载备份',
+restoreTitle: '恢复备份', restoreSettings: '商店设置',
+restoreCategories: '分类', restoreProducts: '产品', restoreSales: '销售历史',
+restoreButton: '恢复备份',
+confirmRestore: '确定恢复吗？所选数据将被覆盖。',
+restoreDone: '恢复成功', invalidBackup: '备份文件无效',
+chooseRestoreSection: '请至少选择一个恢复项',
+dropHint: '将备份文件拖放到此处',
+printMessageLabel: '发票页脚文字（可选）', exportReportCsv: '导出 Excel (CSV)',
+loadInvoice: '载入发票',
+confirmLoadInvoice: '将此发票载入编辑器？当前内容将被替换。',
+confirmDeleteSale: '永久删除此销售记录？',
+todaySalesLabel: '今日销售', weekChartTitle: '近 7 天销售图表',
+quickAddLabel: '快速添加产品', addedToInvoice: '已添加到发票',
+warehouseTitle: '仓库与库存管理', stockLabel: '库存',
+stockAlertLabel: '最低库存（预警）', initialStockLabel: '初始库存',
+receiveStock: '入库', countStock: '盘点', countedQtyLabel: '盘点数量',
+lowStockTitle: '低库存预警', lowStockNone: '所有商品库存充足',
+returnTitle: '登记退货', selectSaleLabel: '选择销售单',
+returnQtyLabel: '退货数量', recordReturn: '登记退货',
+returnsTitle: '退货历史', emptyReturns: '暂无退货记录',
+movesTitle: '库存流水', emptyMoves: '暂无流水记录',
+moveTypeLabel: '类型', move_in: '入库', move_out: '出库',
+move_count: '盘点', move_sale: '销售', move_return: '退货',
+returnDone: '退货已登记', stockDone: '库存已更新',
+invalidQty: '请输入有效数量', noReturnItems: '未选择退货商品',
+returnNumberLabel: '退货编号', remainingLabel: '可退数量', returnShort: '退货',
+currencyLabel: '货币', languageLabel: '语言', calendarLabel: '日历',
+vatLabel: '增值税', vatPercentLabel: '增值税 (%)',
+installerTitle: '安装 Rasa 面板', installerSubtitle: '选择初始设置', installButton: '安装',
+currencyLockedNote: '安装后货币已锁定',
+categoriesTitle: '分类管理', categoryNameLabel: '分类名称', addCategory: '添加分类',
+emptyCategories: '暂无分类',
+productsTitle: '产品管理', productNameLabel: '产品名称', categoryLabel: '分类',
+priceLabel: '价格', addProduct: '添加产品', emptyProducts: '暂无产品',
+selectCategory: '选择分类', invoiceTitle: '创建发票',
+invoiceIdLabel: '发票 ID', invoiceNumberLabel: '发票编号',
+categoryFilterLabel: '分类筛选', allCategories: '全部分类',
+selectProduct: '选择产品', manualProductNameLabel: '自定义产品名称',
+manualProductCategoryLabel: '自定义产品分类', noCategory: '无分类',
+manualPriceLabel: '自定义价格', manualOnlyLabel: '仅自定义产品',
+quantityLabel: '数量', addToInvoice: '添加到发票',
+discountLabel: '折扣', discountTypeLabel: '折扣类型',
+discountAmountType: '金额', discountPercentType: '百分比',
+totalLabel: '小计', payableLabel: '应付',
+recordSale: '记录销售', saveInvoiceList: '保存', newInvoice: '新建',
+repeatLast: '重复', printInvoice: '打印',
+customerNameLabel: '客户姓名', customerPhoneLabel: '客户电话',
+invoiceNoteLabel: '发票备注', deleteLabel: '删除',
+historyTitle: '销售历史', todayLabel: '今天', thisWeekLabel: '本周', thisMonthLabel: '本月',
+reportTypeLabel: '报表类型', reportCalendarLabel: '报表日历',
+dayReport: '日', weekReport: '周', monthReport: '月',
+yearLabel: '年', monthLabel: '月', dayLabel: '日', printReport: '打印报表',
+prev: '上一页', next: '下一页', jalaliCalendar: '波斯历', gregorianCalendar: '公历',
+emptySales: '暂无销售记录', emptyReport: '此期间无销售记录',
+row: '序号', category: '分类', productName: '产品名称', unitPrice: '单价',
+quantity: '数量', sum: '金额', operations: '操作', date: '日期',
+itemsCount: '项目数', total: '合计', discount: '折扣', payable: '应付',
+reportTitle: '销售报表', invoiceTitlePrint: '销售发票', printDate: '打印日期',
+invoiceDate: '日期', customerLabel: '客户', noteLabel: '备注',
+settingsSaved: '设置已保存', backupExported: '备份已下载',
+noLastInvoice: '没有上一张发票',
+categoryRequired: '请输入分类名称',
+productFields: '请输入产品名称、分类和价格',
+quantityValid: '请输入有效数量',
+chooseOrManual: '请选择产品或填写自定义名称和价格',
+invoiceEmpty: '发票为空', saleRecorded: '销售记录成功',
+invoiceSaved: '发票已保存', reportEmpty: '没有可打印的报表',
+confirmDeleteCategory: '删除此分类？', confirmDeleteProduct: '删除此产品？',
+confirmNewInvoice: '开始新发票？', confirmRecordSale: '确认记录此发票？',
+error: '错误', salesWord: '笔销售', invoiceHistoryTitle: '发票历史',
+searchPlaceholder: '按编号或 ID 搜索...', noInvoiceFound: '未找到发票',
+printSale: '打印', storeSignLabel: '商店盖章与签名', panelFooter: 'Rasa 销售管理面板 | HST-MrPablo v3',
+dateTimeLabel: '日期与时间',
+calendar_jalali: '波斯历', calendar_gregorian: '公历', calendar_both: '两种日历',
+currency_USD: '美元', currency_EUR: '欧元', currency_OMR: '阿曼里亚尔', currency_IRT: '伊朗土曼', currency_IRR: '伊朗里亚尔',
+currency_CNY: '人民币（元）', currency_RUB: '俄罗斯卢布',
+language_fa: '波斯语', language_en: '英语', language_fr: '法语',
+language_de: '德语', language_es: '西班牙语', language_en_gb: '英语（英国）',
+language_zh: '中文', language_ru: '俄语'
+},
+ru: {
+appName: 'Панель Rasa',
+subtitle: 'HST-MrPablo — Версия 3',
+tabSettings: 'Настройки', tabCategories: 'Категории', tabProducts: 'Товары',
+tabWarehouse: 'Склад', tabInvoice: 'Счёт', tabHistory: 'История', tabCalendar: 'Календарь',
+whMenuStock: 'Остатки', whMenuReturn: 'Новый возврат', whMenuReturns: 'Возвраты', whMenuMoves: 'Движения',
+deviceInfoTitle: 'Информация об устройстве',
+deviceLabel: 'Тип устройства', osLabel: 'ОС', browserLabel: 'Браузер', screenLabel: 'Разрешение экрана',
+device_mobile: 'Телефон', device_tablet: 'Планшет', device_desktop: 'Компьютер',
+blockMobileLabel: 'Заблокировать мобильный режим',
+blockMobileHint: 'При включении пользователи телефонов и планшетов увидят «Пожалуйста, войдите с компьютера». Настройка меняется только на компьютере.',
+blockTitle: 'Вход с этого устройства запрещён',
+blockMessage: 'Пожалуйста, войдите с компьютера',
+blockHint: 'Доступ с телефонов и планшетов отключён администратором.',
+blockEnabledMsg: 'Мобильный режим заблокирован',
+blockDisabledMsg: 'Блокировка отключена',
+themeToggleLabel: 'Сменить тему',
+productSearchPlaceholder: 'Поиск товаров...',
+noProductFound: 'Товар не найден',
+topProductsTitle: 'Топ продаж',
+inventoryValueTitle: 'Стоимость запасов',
+totalStockTitle: 'Всего единиц',
+lowStockItemsTitle: 'Мало на складе',
+settingsTitle: 'Информация о магазине', storeNameLabel: 'Название магазина', phoneLabel: 'Телефон',
+addressLabel: 'Адрес', saveSettings: 'Сохранить настройки', exportBackup: 'Скачать резервную копию',
+restoreTitle: 'Восстановление', restoreSettings: 'Настройки магазина',
+restoreCategories: 'Категории', restoreProducts: 'Товары', restoreSales: 'История продаж',
+restoreButton: 'Восстановить',
+confirmRestore: 'Выполнить восстановление? Выбранные данные будут заменены.',
+restoreDone: 'Восстановление завершено', invalidBackup: 'Недопустимый файл резервной копии',
+chooseRestoreSection: 'Выберите хотя бы один раздел',
+dropHint: 'Перетащите файл сюда',
+printMessageLabel: 'Текст в нижнем колонтитуле печати (необязательно)', exportReportCsv: 'Экспорт в Excel (CSV)',
+loadInvoice: 'Загрузить в счёт',
+confirmLoadInvoice: 'Загрузить этот счёт в редактор? Текущее содержимое будет заменено.',
+confirmDeleteSale: 'Удалить эту продажу навсегда?',
+todaySalesLabel: 'Продажи сегодня', weekChartTitle: 'Продажи за 7 дней',
+quickAddLabel: 'Быстрое добавление', addedToInvoice: 'Добавлено в счёт',
+warehouseTitle: 'Управление складом', stockLabel: 'Остаток',
+stockAlertLabel: 'Минимальный остаток', initialStockLabel: 'Начальный остаток',
+receiveStock: 'Приход', countStock: 'Инвентаризация', countedQtyLabel: 'Подсчитано',
+lowStockTitle: 'Мало на складе', lowStockNone: 'Всех товаров достаточно',
+returnTitle: 'Оформить возврат', selectSaleLabel: 'Выбрать продажу',
+returnQtyLabel: 'Кол-во возврата', recordReturn: 'Оформить возврат',
+returnsTitle: 'История возвратов', emptyReturns: 'Возвратов нет',
+movesTitle: 'Движения товаров', emptyMoves: 'Движений нет',
+moveTypeLabel: 'Тип', move_in: 'Приход', move_out: 'Расход',
+move_count: 'Инвентаризация', move_sale: 'Продажа', move_return: 'Возврат',
+returnDone: 'Возврат оформлен', stockDone: 'Остаток обновлён',
+invalidQty: 'Введите корректное количество', noReturnItems: 'Товары не выбраны',
+returnNumberLabel: 'Номер возврата', remainingLabel: 'Доступно к возврату', returnShort: 'Возврат',
+currencyLabel: 'Валюта', languageLabel: 'Язык', calendarLabel: 'Календарь',
+vatLabel: 'НДС', vatPercentLabel: 'НДС (%)',
+installerTitle: 'Установка панели Rasa', installerSubtitle: 'Выберите начальные настройки', installButton: 'Установить',
+currencyLockedNote: 'Валюта заблокирована после установки',
+categoriesTitle: 'Управление категориями', categoryNameLabel: 'Название категории', addCategory: 'Добавить категорию',
+emptyCategories: 'Категорий пока нет',
+productsTitle: 'Управление товарами', productNameLabel: 'Название товара', categoryLabel: 'Категория',
+priceLabel: 'Цена', addProduct: 'Добавить товар', emptyProducts: 'Товаров пока нет',
+selectCategory: 'Выберите категорию', invoiceTitle: 'Создание счёта',
+invoiceIdLabel: 'ID счёта', invoiceNumberLabel: 'Номер счёта',
+categoryFilterLabel: 'Фильтр категорий', allCategories: 'Все категории',
+selectProduct: 'Выберите товар', manualProductNameLabel: 'Название (вручную)',
+manualProductCategoryLabel: 'Категория (вручную)', noCategory: 'Без категории',
+manualPriceLabel: 'Цена (вручную)', manualOnlyLabel: 'Только ручной товар',
+quantityLabel: 'Количество', addToInvoice: 'Добавить в счёт',
+discountLabel: 'Скидка', discountTypeLabel: 'Тип скидки',
+discountAmountType: 'Сумма', discountPercentType: 'Процент',
+totalLabel: 'Итого', payableLabel: 'К оплате',
+recordSale: 'Записать продажу', saveInvoiceList: 'Сохранить', newInvoice: 'Новый',
+repeatLast: 'Повторить', printInvoice: 'Печать',
+customerNameLabel: 'Имя клиента', customerPhoneLabel: 'Телефон клиента',
+invoiceNoteLabel: 'Примечание', deleteLabel: 'Удалить',
+historyTitle: 'История продаж', todayLabel: 'Сегодня', thisWeekLabel: 'Эта неделя', thisMonthLabel: 'Этот месяц',
+reportTypeLabel: 'Тип отчёта', reportCalendarLabel: 'Календарь отчёта',
+dayReport: 'День', weekReport: 'Неделя', monthReport: 'Месяц',
+yearLabel: 'Год', monthLabel: 'Месяц', dayLabel: 'День', printReport: 'Печать отчёта',
+prev: 'Назад', next: 'Далее', jalaliCalendar: 'Джелали', gregorianCalendar: 'Григорианский',
+emptySales: 'Продаж пока нет', emptyReport: 'Нет продаж за период',
+row: '№', category: 'Категория', productName: 'Товар', unitPrice: 'Цена',
+quantity: 'Кол-во', sum: 'Сумма', operations: 'Действия', date: 'Дата',
+itemsCount: 'Позиции', total: 'Итого', discount: 'Скидка', payable: 'К оплате',
+reportTitle: 'Отчёт о продажах', invoiceTitlePrint: 'Счёт на продажу', printDate: 'Дата печати',
+invoiceDate: 'Дата', customerLabel: 'Клиент', noteLabel: 'Примечание',
+settingsSaved: 'Настройки сохранены', backupExported: 'Копия скачана',
+noLastInvoice: 'Нет предыдущего счёта',
+categoryRequired: 'Введите название категории',
+productFields: 'Введите название, категорию и цену',
+quantityValid: 'Введите корректное количество',
+chooseOrManual: 'Выберите товар или введите данные вручную',
+invoiceEmpty: 'Счёт пуст', saleRecorded: 'Продажа записана',
+invoiceSaved: 'Счёт сохранён', reportEmpty: 'Нет данных для печати',
+confirmDeleteCategory: 'Удалить категорию?', confirmDeleteProduct: 'Удалить товар?',
+confirmNewInvoice: 'Начать новый счёт?', confirmRecordSale: 'Записать счёт?',
+error: 'Ошибка', salesWord: 'продаж(и)', invoiceHistoryTitle: 'История счетов',
+searchPlaceholder: 'Поиск по номеру или ID...', noInvoiceFound: 'Счета не найдены',
+printSale: 'Печать', storeSignLabel: 'Печать и подпись магазина', panelFooter: 'Панель управления продажами Rasa | HST-MrPablo v3',
+dateTimeLabel: 'Дата и время',
+calendar_jalali: 'Календарь Джелали', calendar_gregorian: 'Григорианский календарь', calendar_both: 'Оба календаря',
+currency_USD: 'Доллар США', currency_EUR: 'Евро', currency_OMR: 'Оманский риал', currency_IRT: 'Иранский туман', currency_IRR: 'Иранский риал',
+currency_CNY: 'Китайский юань', currency_RUB: 'Российский рубль',
+language_fa: 'Персидский', language_en: 'Английский', language_fr: 'Французский',
+language_de: 'Немецкий', language_es: 'Испанский', language_en_gb: 'Английский (UK)',
+language_zh: 'Китайский', language_ru: 'Русский'
 },
 en_GB: {}
 };
@@ -3308,6 +3597,9 @@ const iconEdit = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="curr
 const iconReturn = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
 const iconPlus = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
 const iconCheck = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const iconBox = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+const iconLayers = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+const iconAlert = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 function t(key) {
 const lang = appData.settings.language || 'fa';
 if (translations[lang] && translations[lang].hasOwnProperty(key)) return translations[lang][key];
@@ -3464,7 +3756,6 @@ function updateBlockToggleVisibility() {
 const device = detectDeviceInfo().device;
 const isDesktop = device === 'desktop';
 const row = document.getElementById('blockMobileRow');
-const hint = row ? row.nextElementSibling : null;
 if (row) row.style.display = isDesktop ? 'flex' : 'none';
 }
 async function onBlockMobileToggle() {
@@ -3508,9 +3799,10 @@ setInterval(updateLiveClock, 1000);
 }
 function applyLanguage() {
 const lang = appData.settings.language || 'fa';
-document.documentElement.lang = lang === 'en_GB' ? 'en-GB' : lang;
+const htmlLang = lang === 'en_GB' ? 'en-GB' : (lang === 'zh' ? 'zh-CN' : lang);
+document.documentElement.lang = htmlLang;
 document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
-document.title = t('appName');
+document.title = t('appName') + ' | HST-MrPablo v3';
 document.querySelectorAll('[data-i18n]').forEach(function (element) {
 element.textContent = t(element.getAttribute('data-i18n'));
 });
@@ -3528,9 +3820,7 @@ updateThemeIcons();
 function updateThemeIcons() {
 const icon = document.body.classList.contains('dark') ? sunIcon : moonIcon;
 const appIcon = document.getElementById('appThemeIcon');
-const installerIcon = document.getElementById('installerThemeIcon');
 if (appIcon) appIcon.outerHTML = icon.replace('class="icon"', 'class="icon" id="appThemeIcon"');
-if (installerIcon) installerIcon.outerHTML = icon.replace('class="icon"', 'class="icon" id="installerThemeIcon"');
 }
 async function toggleTheme() {
 const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
@@ -3912,11 +4202,28 @@ else { toast(result.error || t('error'), 'error'); }
 }
 function openReturnFor(saleId) { returnSaleId = saleId; switchWarehouse('return'); }
 function renderWarehouse() {
+renderInventoryStats();
 renderLowStock();
 renderInventoryTable();
 renderReturnForm();
 renderReturnsList();
 renderMovesList();
+}
+function renderInventoryStats() {
+const box = document.getElementById('inventoryStats');
+if (!box) return;
+let totalUnits = 0, totalValue = 0, lowCount = 0;
+appData.products.forEach(function (p) {
+const s = Number(p.stock || 0);
+totalUnits += s;
+totalValue += s * Number(p.price || 0);
+if (isLowStock(p)) lowCount++;
+});
+const lowIconStyle = lowCount > 0 ? ' style="background: var(--danger-bg); color: var(--danger);"' : '';
+box.innerHTML =
+'<div class="stat-card"><div class="stat-icon">' + iconBox + '</div><div class="stat-body"><div class="stat-label">' + escapeHtml(t('inventoryValueTitle')) + '</div><div class="stat-value" style="font-size: 18px;">' + escapeHtml(formatMoney(totalValue)) + '</div></div></div>'
++ '<div class="stat-card"><div class="stat-icon">' + iconLayers + '</div><div class="stat-body"><div class="stat-label">' + escapeHtml(t('totalStockTitle')) + '</div><div class="stat-value">' + escapeHtml(formatNumber(totalUnits)) + '</div></div></div>'
++ '<div class="stat-card"><div class="stat-icon"' + lowIconStyle + '>' + iconAlert + '</div><div class="stat-body"><div class="stat-label">' + escapeHtml(t('lowStockItemsTitle')) + '</div><div class="stat-value">' + escapeHtml(formatNumber(lowCount)) + '</div></div></div>';
 }
 function renderLowStock() {
 const box = document.getElementById('lowStockBox');
@@ -4353,12 +4660,27 @@ name: '', phone: '', address: '', currency: 'IRT', language: 'fa',
 calendar: 'jalali', installed: false, currency_locked: false, vat: 0, theme: 'light', print_message: '', block_mobile: false
 }, result.settings);
 applyTheme(appData.settings.theme || 'light');
+appData.categories = result.categories;
+appData.products = result.products;
+appData.sales = Array.isArray(result.sales) ? result.sales : [];
+appData.returns = Array.isArray(result.returns) ? result.returns : [];
+appData.stockMoves = Array.isArray(result.stockMoves) ? result.stockMoves : [];
+appData.history = result.history || {};
+invoiceItems = Array.isArray(result.invoiceItems) ? result.invoiceItems : [];
+invoiceDiscount = Number(result.invoiceDiscount || 0);
+invoiceDiscountType = result.invoiceDiscountType || 'amount';
+invoiceId = result.invoiceId || generateInvoiceIdLocal();
+invoiceNumber = result.invoiceNumber || generateInvoiceNumberLocal();
+invoiceCustomerName = result.invoiceCustomerName || '';
+invoiceCustomerPhone = result.invoiceCustomerPhone || '';
+invoiceNote = result.invoiceNote || '';
 if (!appData.settings.installed) {
 installerCurrency = appData.settings.currency || 'IRT';
 installerLanguage = appData.settings.language || 'fa';
 installerCalendar = appData.settings.calendar || 'jalali';
 document.getElementById('app').style.display = 'none';
 document.getElementById('installer').style.display = 'block';
+document.getElementById('islandNav').style.display = 'none';
 document.getElementById('sideIsland').style.display = 'none';
 document.body.classList.remove('app-active');
 appData.settings.language = installerLanguage;
@@ -4375,20 +4697,6 @@ document.getElementById('sideIsland').style.display = 'flex';
 document.body.classList.add('app-active');
 document.getElementById('liveClock').style.display = 'inline-flex';
 startLiveClock();
-appData.categories = result.categories;
-appData.products = result.products;
-appData.sales = Array.isArray(result.sales) ? result.sales : [];
-appData.returns = Array.isArray(result.returns) ? result.returns : [];
-appData.stockMoves = Array.isArray(result.stockMoves) ? result.stockMoves : [];
-appData.history = result.history || {};
-invoiceItems = Array.isArray(result.invoiceItems) ? result.invoiceItems : [];
-invoiceDiscount = Number(result.invoiceDiscount || 0);
-invoiceDiscountType = result.invoiceDiscountType || 'amount';
-invoiceId = result.invoiceId || generateInvoiceIdLocal();
-invoiceNumber = result.invoiceNumber || generateInvoiceNumberLocal();
-invoiceCustomerName = result.invoiceCustomerName || '';
-invoiceCustomerPhone = result.invoiceCustomerPhone || '';
-invoiceNote = result.invoiceNote || '';
 document.getElementById('invoiceDiscount').value = invoiceDiscount;
 if (document.getElementById('discountType')) {
 document.getElementById('discountType').value = invoiceDiscountType;
@@ -4501,8 +4809,7 @@ title.textContent = product.name;
 const meta = document.createElement('div');
 meta.className = 'muted';
 const stockText = t('stockLabel') + ': ' + formatNumber(Number(product.stock || 0));
-const metaHtml = escapeHtml(product.category) + ' - ' + escapeHtml(formatMoney(product.price)) + ' | ' + (isLowStock(product) ? '<span class="stock-low">' + escapeHtml(stockText) + '</span>' : escapeHtml(stockText));
-meta.innerHTML = metaHtml;
+meta.innerHTML = escapeHtml(product.category) + ' - ' + escapeHtml(formatMoney(product.price)) + ' | ' + (isLowStock(product) ? '<span class="stock-low">' + escapeHtml(stockText) + '</span>' : escapeHtml(stockText));
 info.appendChild(title);
 info.appendChild(meta);
 const button = document.createElement('button');
@@ -4747,7 +5054,8 @@ if (searchTerm) {
 filteredSales = appData.sales.filter(function (sale) {
 const invoiceNumber = (sale.invoice_number || '').toLowerCase();
 const invoiceId = (sale.invoice_id || '').toLowerCase();
-return invoiceNumber.includes(searchTerm) || invoiceId.includes(searchTerm);
+const customerName = (sale.customer_name || '').toLowerCase();
+return invoiceNumber.includes(searchTerm) || invoiceId.includes(searchTerm) || customerName.includes(searchTerm);
 });
 }
 if (!filteredSales.length) {
@@ -4855,6 +5163,61 @@ col.appendChild(label);
 box.appendChild(col);
 });
 }
+function renderTopProducts() {
+const box = document.getElementById('topProductsList');
+if (!box) return;
+const map = {};
+appData.sales.forEach(function (sale) {
+const items = Array.isArray(sale.items) ? sale.items : [];
+items.forEach(function (item) {
+const name = String(item.name || '').trim();
+if (!name) return;
+const key = name + '|' + String(item.category || '');
+if (!map[key]) {
+map[key] = { name: name, category: item.category || '-', qty: 0, revenue: 0 };
+}
+const qty = Number(item.quantity || 0);
+map[key].qty += qty;
+map[key].revenue += qty * Number(item.price || 0);
+});
+});
+const list = Object.keys(map).map(function (k) { return map[k]; })
+.sort(function (a, b) { return b.qty - a.qty; })
+.slice(0, 5);
+box.innerHTML = '';
+if (!list.length) {
+box.innerHTML = '<div class="empty-state">' + escapeHtml(t('emptySales')) + '</div>';
+return;
+}
+const maxQty = list[0].qty || 1;
+list.forEach(function (p, i) {
+const row = document.createElement('div');
+row.className = 'top-item';
+const rank = document.createElement('div');
+rank.className = 'top-rank';
+rank.textContent = formatNumber(i + 1);
+const info = document.createElement('div');
+info.className = 'top-info';
+const nameEl = document.createElement('div');
+nameEl.className = 'top-name';
+nameEl.textContent = p.name;
+const metaEl = document.createElement('div');
+metaEl.className = 'top-meta';
+metaEl.textContent = p.category + ' | ' + t('quantity') + ': ' + formatNumber(p.qty) + ' | ' + t('total') + ': ' + formatMoney(p.revenue);
+const track = document.createElement('div');
+track.className = 'top-track';
+const fill = document.createElement('div');
+fill.className = 'top-fill';
+fill.style.width = Math.max(Math.round((p.qty / maxQty) * 100), 4) + '%';
+track.appendChild(fill);
+info.appendChild(nameEl);
+info.appendChild(metaEl);
+info.appendChild(track);
+row.appendChild(rank);
+row.appendChild(info);
+box.appendChild(row);
+});
+}
 function renderHistory() {
 const history = appData.history || {};
 if (!calendarInitialized) {
@@ -4886,6 +5249,7 @@ if ((sale.date || '') === todayKey) { todayTotal += Number(sale.total || 0); tod
 document.getElementById('todayTotal').textContent = formatMoney(todayTotal);
 document.getElementById('todayCount').textContent = formatNumber(todayCount) + ' ' + t('salesWord');
 renderWeekChart();
+renderTopProducts();
 renderSalesTable();
 }
 function renderSalesTable() {
@@ -5448,6 +5812,12 @@ window.print();
 document.addEventListener('keydown', function (e) {
 if (e.key === 'Escape') closeMobileMenu();
 });
+window.addEventListener('resize', function () { evaluateResize(); });
+function evaluateResize() {
+updateBlockToggleVisibility();
+applyMobileBlock();
+if (window.innerWidth > 768) closeMobileMenu();
+}
 initRestoreDrop();
 renderDeviceInfo();
 updateBlockToggleVisibility();
